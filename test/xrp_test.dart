@@ -69,7 +69,7 @@ void main() {
     ]);
     final verdict = verifyXrpSignature(VerifyXrpSignatureArgs(
       signedTx: hostile,
-      expectedSigningPubKey: '02' + '00' * 32,
+      expectedSigningPubKey: "02${'00' * 32}",
     ));
     expect(verdict.ok, isFalse);
   });
