@@ -33,7 +33,8 @@ class Secp256k1 {
   /// Verify a compact `r || s` signature over a 32-byte digest.
   ///
   /// Enforces canonical low-S: `s > n/2` returns false.
-  static bool verify(Uint8List signature64, Uint8List digest32, Uint8List publicKey) {
+  static bool verify(
+      Uint8List signature64, Uint8List digest32, Uint8List publicKey) {
     if (signature64.length != 64 || digest32.length != 32) return false;
     final r = bytesToBigint(Uint8List.sublistView(signature64, 0, 32));
     final s = bytesToBigint(Uint8List.sublistView(signature64, 32, 64));
@@ -60,7 +61,8 @@ class Secp256k1 {
   /// Recover the compressed public key from a compact signature, its 32-byte
   /// digest and a recovery id (0..3). Throws [ArgumentError] when the inputs
   /// do not name a valid point.
-  static Uint8List recover(Uint8List signature64, Uint8List digest32, int recoveryId) {
+  static Uint8List recover(
+      Uint8List signature64, Uint8List digest32, int recoveryId) {
     if (signature64.length != 64) {
       throw ArgumentError('signature must be 64 bytes');
     }

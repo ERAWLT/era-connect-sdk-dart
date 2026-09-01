@@ -18,7 +18,8 @@ Uint8List randomRequestId([RandomBytesFn? randomBytes]) {
   if (randomBytes != null) {
     final out = randomBytes(16);
     if (out.length != 16) {
-      throw EraSdkError('no-secure-random', 'randomBytes(16) did not return 16 bytes');
+      throw EraSdkError(
+          'no-secure-random', 'randomBytes(16) did not return 16 bytes');
     }
     return out;
   }
@@ -58,9 +59,11 @@ Uint8List normalizeRequestId(Object id) {
   if (id is String) {
     final hex = id.replaceAll('-', '');
     if (!_hex32.hasMatch(hex)) {
-      throw EraSdkError('invalid-props', 'request id string must be a 32-hex UUID');
+      throw EraSdkError(
+          'invalid-props', 'request id string must be a 32-hex UUID');
     }
     return hexToBytes(hex.toLowerCase());
   }
-  throw EraSdkError('invalid-props', 'request id must be 16 bytes or a UUID string');
+  throw EraSdkError(
+      'invalid-props', 'request id must be 16 bytes or a UUID string');
 }

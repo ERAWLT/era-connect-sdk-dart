@@ -7,7 +7,8 @@ import 'digests.dart';
 /// Address text codecs (base58, base58check, bech32). Hand-rolled: the SDK's
 /// byte-exact address contract must not float with third-party releases.
 
-const String _base58Alphabet = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
+const String _base58Alphabet =
+    '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
 
 String base58Encode(Uint8List bytes) {
   var value = bytesToBigint(bytes);
@@ -48,7 +49,8 @@ Uint8List base58Decode(String text) {
 
 String base58CheckEncode(Uint8List payload) {
   final check = sha256d(payload);
-  return base58Encode(concatBytes([payload, Uint8List.sublistView(check, 0, 4)]));
+  return base58Encode(
+      concatBytes([payload, Uint8List.sublistView(check, 0, 4)]));
 }
 
 Uint8List base58CheckDecode(String text) {
@@ -118,7 +120,9 @@ List<int> convertBits(List<int> data, int from, int to, {required bool pad}) {
 String bech32Encode(String hrp, List<int> words) {
   final values = [..._bech32HrpExpand(hrp), ...words, 0, 0, 0, 0, 0, 0];
   final polymod = _bech32Polymod(values) ^ 1;
-  final checksum = [for (var i = 0; i < 6; i++) (polymod >> (5 * (5 - i))) & 31];
+  final checksum = [
+    for (var i = 0; i < 6; i++) (polymod >> (5 * (5 - i))) & 31
+  ];
   final body = [...words, ...checksum].map((v) => _bech32Charset[v]).join();
   return '$hrp' '1$body';
 }

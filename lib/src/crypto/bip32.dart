@@ -11,7 +11,8 @@ import 'secp256k1.dart';
 /// Non-hardened BIP-32 public child derivation — the only derivation a
 /// watch-only SDK needs. Hardened steps require the private key and are
 /// refused; the linked account already sits below every hardened level.
-Uint8List deriveChildPublicKey(Uint8List parentPublicKey33, Uint8List chainCode, int index) {
+Uint8List deriveChildPublicKey(
+    Uint8List parentPublicKey33, Uint8List chainCode, int index) {
   if (parentPublicKey33.length != 33) {
     throw EraSdkError('invalid-props', 'parent public key must be 33 bytes');
   }
@@ -19,7 +20,8 @@ Uint8List deriveChildPublicKey(Uint8List parentPublicKey33, Uint8List chainCode,
     throw EraSdkError('invalid-props', 'chain code must be 32 bytes');
   }
   if (index < 0 || index >= 0x80000000) {
-    throw EraSdkError('invalid-props', 'public derivation index must be non-hardened');
+    throw EraSdkError(
+        'invalid-props', 'public derivation index must be non-hardened');
   }
   final data = concatBytes([parentPublicKey33, u32be(index)]);
   final i = hmacSha512(chainCode, data);
@@ -27,12 +29,14 @@ Uint8List deriveChildPublicKey(Uint8List parentPublicKey33, Uint8List chainCode,
 
   final ECDomainParameters domain = ECCurve_secp256k1();
   if (il >= domain.n) {
-    throw EraSdkError('invalid-props', 'derived scalar out of range (try the next index)');
+    throw EraSdkError(
+        'invalid-props', 'derived scalar out of range (try the next index)');
   }
   final parent = Secp256k1.parsePublicKey(parentPublicKey33);
   final child = (domain.G * il)! + parent;
   if (child == null || child.isInfinity) {
-    throw EraSdkError('invalid-props', 'derived point at infinity (try the next index)');
+    throw EraSdkError(
+        'invalid-props', 'derived point at infinity (try the next index)');
   }
   return Uint8List.fromList(child.getEncoded(true));
 }
@@ -46,12 +50,14 @@ int publicKeyFingerprint(Uint8List publicKey33) {
 
 /// Derive along a run of non-hardened steps (e.g. `[change, index]`),
 /// propagating the chain code between levels.
-Uint8List derivePublicKeyPath(Uint8List publicKey33, Uint8List chainCode, List<int> steps) {
+Uint8List derivePublicKeyPath(
+    Uint8List publicKey33, Uint8List chainCode, List<int> steps) {
   var pub = publicKey33;
   var cc = chainCode;
   for (final step in steps) {
     if (step < 0 || step >= 0x80000000) {
-      throw EraSdkError('invalid-props', 'public derivation index must be non-hardened');
+      throw EraSdkError(
+          'invalid-props', 'public derivation index must be non-hardened');
     }
     final i = hmacSha512(cc, concatBytes([pub, u32be(step)]));
     pub = deriveChildPublicKey(pub, cc, step);

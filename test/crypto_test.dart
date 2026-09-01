@@ -14,8 +14,9 @@ import 'package:test/test.dart';
 /// TypeScript SDK's crypto stack (@noble/curves, @noble/hashes, @scure/bip32),
 /// so agreement here pins this port to the same primitives byte-for-byte.
 void main() {
-  final kat = jsonDecode(File('test/fixtures/crypto-kat.json').readAsStringSync())
-      as Map<String, dynamic>;
+  final kat =
+      jsonDecode(File('test/fixtures/crypto-kat.json').readAsStringSync())
+          as Map<String, dynamic>;
 
   group('digests', () {
     final digests = kat['digests'] as Map<String, dynamic>;
@@ -52,7 +53,8 @@ void main() {
       final v = kat['secp256k1HighS'] as Map<String, dynamic>;
       final sig = hexToBytes('${v['r'] as String}${v['s'] as String}');
       expect(
-        Secp256k1.verify(sig, hexToBytes(v['digest'] as String), hexToBytes(v['pub33'] as String)),
+        Secp256k1.verify(sig, hexToBytes(v['digest'] as String),
+            hexToBytes(v['pub33'] as String)),
         isFalse,
       );
     });
@@ -72,7 +74,9 @@ void main() {
         );
         final badSig = hexToBytes(v['sig'] as String);
         badSig[0] ^= 1;
-        expect(ed25519Verify(hexToBytes(v['pub'] as String), hexToBytes(v['msg'] as String), badSig),
+        expect(
+            ed25519Verify(hexToBytes(v['pub'] as String),
+                hexToBytes(v['msg'] as String), badSig),
             isFalse);
       }
     });
@@ -83,8 +87,10 @@ void main() {
       final v = (kat['bip32'] as List<dynamic>).first as Map<String, dynamic>;
       final parent = hexToBytes(v['parentPub'] as String);
       final cc = hexToBytes(v['chainCode'] as String);
-      expect(bytesToHex(derivePublicKeyPath(parent, cc, [0, 0])), v['child_0_0']);
-      expect(bytesToHex(derivePublicKeyPath(parent, cc, [1, 5])), v['child_1_5']);
+      expect(
+          bytesToHex(derivePublicKeyPath(parent, cc, [0, 0])), v['child_0_0']);
+      expect(
+          bytesToHex(derivePublicKeyPath(parent, cc, [1, 5])), v['child_1_5']);
     });
   });
 

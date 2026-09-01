@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 
+import 'package:era_connect/src/accounts/accounts.dart';
 import 'package:era_connect/src/accounts/derive.dart';
 import 'package:era_connect/src/cbor/decode.dart';
 import 'package:era_connect/src/cbor/encode.dart';
@@ -313,7 +314,64 @@ void main() {
     });
   });
 
-  // The TypeScript suite's last block, "Cardano linking (path-only origin
-  // falls back to the master fingerprint)", exercises parseAccounts /
-  // accounts.cardano(); it lands together with the accounts module port.
+  group(
+      'Cardano linking (path-only origin falls back to the master fingerprint)',
+      () {
+    test('parses a Vespr-style entry {3,4,6(path-only)}', () {
+      final entropy = Uint8List.fromList(List.filled(32, 4));
+      final master = icarusMasterFromEntropy(entropy);
+      final account = derivePath(master, const [
+        IcarusLevel(index: 1852, hardened: true),
+        IcarusLevel(index: 1815, hardened: true),
+        IcarusLevel(index: 0, hardened: true),
+      ]);
+      final wallet = cborEncode(
+        cbMap([
+          (1, cbUint(0xdeadbeef)),
+          (
+            2,
+            cbArray([
+              cbMap([
+                (3, cbBytes(publicKeyOf(account.kL))),
+                (4, cbBytes(account.chainCode)),
+                (
+                  6,
+                  cbTag(
+                    304,
+                    cbMap([
+                      (
+                        1,
+                        cbArray([
+                          cbUint(1852),
+                          cbBool(true),
+                          cbUint(1815),
+                          cbBool(true),
+                          cbUint(0),
+                          cbBool(true),
+                        ]),
+                      ),
+                    ]),
+                  ),
+                ), // origin[1]-only: NO source fingerprint — the device's real shape
+              ]),
+            ]),
+          ),
+          (3, cbText('ERA Wallet')),
+          (5, cbText('9.9.9')),
+        ]),
+      );
+      final accounts = EraAccounts.fromUr(Ur('crypto-multi-accounts', wallet));
+      final ada = accounts.cardano()!;
+      expect(ada.accountPath, "m/1852'/1815'/0'");
+      expect(
+          ada.xfp, 'deadbeef'); // fell back to the wrapper master fingerprint
+      expect(
+        bytesToHex(ada.deriveKey(0, 0)),
+        bytesToHex(publicKeyOf(derivePath(account, const [
+          IcarusLevel(index: 0, hardened: false),
+          IcarusLevel(index: 0, hardened: false),
+        ]).kL)),
+      );
+    });
+  });
 }
