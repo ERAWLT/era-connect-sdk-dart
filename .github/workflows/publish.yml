@@ -1,0 +1,15 @@
+# Automated publishing to pub.dev (OIDC — no long-lived credentials).
+# Requires the "Automated publishing from GitHub Actions" toggle on the
+# package's pub.dev admin page (available after the first manual publish),
+# with repository ERAWLT/era-connect-sdk-dart and tag pattern v{{version}}.
+name: Publish
+
+on:
+  push:
+    tags: ['v[0-9]+.[0-9]+.[0-9]+*']
+
+jobs:
+  publish:
+    uses: dart-lang/setup-dart/.github/workflows/publish.yml@v1
+    permissions:
+      id-token: write
