@@ -1,0 +1,96 @@
+{
+  "requests": [
+    {
+      "name": "signRequest",
+      "props": {
+        "requestId": "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d",
+        "intentMessageHex": "000000000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f404142434445464748494a4b4c4d4e4f",
+        "path": "m/44'/784'/0'/0'/0'",
+        "xfp": "deadbeef",
+        "addressHex": "0x8f9164014fb41ea083772e5bb3429ed63adde438c95a1d4b4f8c4818ef84efa6"
+      },
+      "urType": "sui-sign-request",
+      "cborHex": "a501d825509b1deb4d3b7d4bad9bdd2b0d7b3dcb6d025853000000000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f404142434445464748494a4b4c4d4e4f0381d90130a2018a182cf5190310f500f500f500f5021adeadbeef048158208f9164014fb41ea083772e5bb3429ed63adde438c95a1d4b4f8c4818ef84efa6056b45524120436f6e6e656374"
+    },
+    {
+      "name": "signHashRequest",
+      "props": {
+        "requestId": "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d",
+        "messageHashHex": "c4d25749b4ef5d68fc67820981e54a6bfcc4ca41a97ed70252c1c7dbf3ba856f",
+        "path": "m/44'/784'/0'/0'/0'",
+        "xfpNumber": 3735928559,
+        "origin": "Parity Harness"
+      },
+      "urType": "sui-sign-hash-request",
+      "cborHex": "a401d825509b1deb4d3b7d4bad9bdd2b0d7b3dcb6d027840633464323537343962346566356436386663363738323039383165353461366266636334636134316139376564373032353263316337646266336261383536660381d90130a2018a182cf5190310f500f500f500f5021adeadbeef056e506172697479204861726e657373"
+    }
+  ],
+  "replies": [
+    {
+      "name": "intentReply",
+      "requestName": "signRequest",
+      "ur": "ur:sui-signature/otadtpdagdndcawmgtfrkigrpmndutdnbtkgfssbjnaohdfzguwyzscyfzenkbwnmktolsolvwbypekirhnbrdnbndgyahmybypaiylfhdynhngavsnbtirebknlsplezomkoxsabecthtjzrpeevydsfmsnbsbdidrnkgzstekgtiadaxhdcxlshkkpwmtstdcfmdjpcstezojkghsgsrchhljtgosnkomycyhltelfrltovouogszsmydpwl",
+      "parsed": {
+        "requestIdHex": "9b1deb4d3b7d4bad9bdd2b0d7b3dcb6d",
+        "signatureHex": "53eefa1a40367ef198ce83a6e511af7db9a0baa09b51058f11b1668258f66049e8a0d0b50a99c88afb98a4c2101f5a6cb634e1263ecd0f0b62be7bfad37bd001",
+        "publicKeyHex": "835975ebd7d219957218d3fb7354cac3175d6e55cd768f1a5dd382b7cee2dc4c"
+      },
+      "verify": {
+        "intentMessageHex": "000000000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f404142434445464748494a4b4c4d4e4f",
+        "expectedPublicKeyHex": "835975ebd7d219957218d3fb7354cac3175d6e55cd768f1a5dd382b7cee2dc4c"
+      },
+      "expect": "verify:true"
+    },
+    {
+      "name": "hashReply",
+      "requestName": "signHashRequest",
+      "ur": "ur:sui-signature/otadtpdagdndcawmgtfrkigrpmndutdnbtkgfssbjnaohdfzbyvdfpihyksrnndmetrpfdhedsaardwemohlkskskkpschguhpeorywnhhltursrgopevownoelavagadkenfgghploelgzespdkfwrkluytdlhfasrnsftittkifgbnaxhdcxlshkkpwmtstdcfmdjpcstezojkghsgsrchhljtgosnkomycyhltelfrltovouogsbblehnbk",
+      "parsed": {
+        "requestIdHex": "9b1deb4d3b7d4bad9bdd2b0d7b3dcb6d",
+        "signatureHex": "11e74165f5c39e2e38b6485f2604baed925d787879ac17535b33bdf15c87dfc355afe2f1a280e64924364654aea28dfec82442bb8bf92f5609beccd0d17d460c",
+        "publicKeyHex": "835975ebd7d219957218d3fb7354cac3175d6e55cd768f1a5dd382b7cee2dc4c"
+      },
+      "verify": {
+        "messageHashHex": "c4d25749b4ef5d68fc67820981e54a6bfcc4ca41a97ed70252c1c7dbf3ba856f",
+        "expectedPublicKeyHex": "835975ebd7d219957218d3fb7354cac3175d6e55cd768f1a5dd382b7cee2dc4c"
+      },
+      "expect": "verify:true"
+    },
+    {
+      "name": "wrongRequestIdEcho",
+      "requestName": "signRequest",
+      "ur": "ur:sui-signature/otadtpdagdndcawmgtfrkigrpmndutdnbtkgfssbjzaohdfzguwyzscyfzenkbwnmktolsolvwbypekirhnbrdnbndgyahmybypaiylfhdynhngavsnbtirebknlsplezomkoxsabecthtjzrpeevydsfmsnbsbdidrnkgzstekgtiadaxhdcxlshkkpwmtstdcfmdjpcstezojkghsgsrchhljtgosnkomycyhltelfrltovouogswzghyacp",
+      "expect": "throws:request-id-mismatch"
+    },
+    {
+      "name": "corruptedSignature",
+      "requestName": "signRequest",
+      "ur": "ur:sui-signature/otadtpdagdndcawmgtfrkigrpmndutdnbtkgfssbjnaohdfzgmwyzscyfzenkbwnmktolsolvwbypekirhnbrdnbndgyahmybypaiylfhdynhngavsnbtirebknlsplezomkoxsabecthtjzrpeevydsfmsnbsbdidrnkgzstekgtiadaxhdcxlshkkpwmtstdcfmdjpcstezojkghsgsrchhljtgosnkomycyhltelfrltovouogsbswddwdn",
+      "parsed": {
+        "requestIdHex": "9b1deb4d3b7d4bad9bdd2b0d7b3dcb6d",
+        "signatureHex": "52eefa1a40367ef198ce83a6e511af7db9a0baa09b51058f11b1668258f66049e8a0d0b50a99c88afb98a4c2101f5a6cb634e1263ecd0f0b62be7bfad37bd001",
+        "publicKeyHex": "835975ebd7d219957218d3fb7354cac3175d6e55cd768f1a5dd382b7cee2dc4c"
+      },
+      "verify": {
+        "intentMessageHex": "000000000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f404142434445464748494a4b4c4d4e4f",
+        "expectedPublicKeyHex": "835975ebd7d219957218d3fb7354cac3175d6e55cd768f1a5dd382b7cee2dc4c"
+      },
+      "expect": "verify:false"
+    },
+    {
+      "name": "substitutedPayload",
+      "requestName": "signRequest",
+      "ur": "ur:sui-signature/otadtpdagdndcawmgtfrkigrpmndutdnbtkgfssbjnaohdfzguwyzscyfzenkbwnmktolsolvwbypekirhnbrdnbndgyahmybypaiylfhdynhngavsnbtirebknlsplezomkoxsabecthtjzrpeevydsfmsnbsbdidrnkgzstekgtiadaxhdcxlshkkpwmtstdcfmdjpcstezojkghsgsrchhljtgosnkomycyhltelfrltovouogszsmydpwl",
+      "parsed": {
+        "requestIdHex": "9b1deb4d3b7d4bad9bdd2b0d7b3dcb6d",
+        "signatureHex": "53eefa1a40367ef198ce83a6e511af7db9a0baa09b51058f11b1668258f66049e8a0d0b50a99c88afb98a4c2101f5a6cb634e1263ecd0f0b62be7bfad37bd001",
+        "publicKeyHex": "835975ebd7d219957218d3fb7354cac3175d6e55cd768f1a5dd382b7cee2dc4c"
+      },
+      "verify": {
+        "intentMessageHex": "010000000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f404142434445464748494a4b4c4d4e4f",
+        "expectedPublicKeyHex": "835975ebd7d219957218d3fb7354cac3175d6e55cd768f1a5dd382b7cee2dc4c"
+      },
+      "expect": "verify:false"
+    }
+  ]
+}

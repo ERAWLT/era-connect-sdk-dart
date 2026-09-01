@@ -1,0 +1,198 @@
+{
+  "generator": "era-connect TypeScript SDK (test-only synthetic material)",
+  "seedHex": "5eb00bbddcf069084889a8ab9155568165f5c453ccb85e70811aaed6f6da5fc19a5ac40b389cd370d086206dec8aa6c43daea6690f20ad3d8d48b2d2ce9e38e4",
+  "origin": "Parity Test",
+  "addressHex": "9858effd232b4033e47d90003d41ec34ecaeda94",
+  "requests": [
+    {
+      "name": "tx_legacy_chain137",
+      "props": {
+        "requestId": "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d",
+        "signDataHex": "000306090c0f1215181b1e2124272a2d303336393c3f4245484b4e5154575a5d606366696c6f7275787b7e8184878a8d",
+        "dataType": 1,
+        "path": "m/44'/60'/0'/0/0",
+        "xfp": "11111111",
+        "chainId": 137,
+        "addressHex": "9858effd232b4033e47d90003d41ec34ecaeda94"
+      },
+      "urType": "eth-sign-request",
+      "cborHex": "a701509b1deb4d3b7d4bad9bdd2b0d7b3dcb6d025830000306090c0f1215181b1e2124272a2d303336393c3f4245484b4e5154575a5d606366696c6f7275787b7e8184878a8d030104188905d90130a2018a182cf5183cf500f500f400f4021a1111111106549858effd232b4033e47d90003d41ec34ecaeda94076b5061726974792054657374"
+    },
+    {
+      "name": "typed_tx_chain56",
+      "props": {
+        "requestId": "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d",
+        "signDataHex": "000306090c0f1215181b1e2124272a2d303336393c3f4245484b4e5154575a5d606366696c6f7275787b7e8184878a8d",
+        "dataType": 4,
+        "path": "m/44'/60'/0'/0/0",
+        "xfp": "11111111",
+        "chainId": 56,
+        "addressHex": "9858effd232b4033e47d90003d41ec34ecaeda94"
+      },
+      "urType": "eth-sign-request",
+      "cborHex": "a701509b1deb4d3b7d4bad9bdd2b0d7b3dcb6d025830000306090c0f1215181b1e2124272a2d303336393c3f4245484b4e5154575a5d606366696c6f7275787b7e8184878a8d030404183805d90130a2018a182cf5183cf500f500f400f4021a1111111106549858effd232b4033e47d90003d41ec34ecaeda94076b5061726974792054657374"
+    },
+    {
+      "name": "personal_message",
+      "props": {
+        "requestId": "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d",
+        "signDataHex": "000306090c0f1215181b1e2124272a2d303336393c3f4245484b4e5154575a5d606366696c6f7275787b7e8184878a8d",
+        "dataType": 3,
+        "path": "m/44'/60'/0'/0/0",
+        "xfp": "11111111",
+        "addressHex": "9858effd232b4033e47d90003d41ec34ecaeda94",
+        "origin": "Origin Override"
+      },
+      "urType": "eth-sign-request",
+      "cborHex": "a601509b1deb4d3b7d4bad9bdd2b0d7b3dcb6d025830000306090c0f1215181b1e2124272a2d303336393c3f4245484b4e5154575a5d606366696c6f7275787b7e8184878a8d030305d90130a2018a182cf5183cf500f500f400f4021a1111111106549858effd232b4033e47d90003d41ec34ecaeda94076f4f726967696e204f76657272696465"
+    },
+    {
+      "name": "typed_data",
+      "props": {
+        "requestId": "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d",
+        "signDataHex": "000306090c0f1215181b1e2124272a2d303336393c3f4245484b4e5154575a5d606366696c6f7275787b7e8184878a8d",
+        "dataType": 2,
+        "path": "m/44'/60'/0'/0/0",
+        "xfp": "11111111",
+        "chainId": 1,
+        "addressHex": "9858effd232b4033e47d90003d41ec34ecaeda94"
+      },
+      "urType": "eth-sign-request",
+      "cborHex": "a701509b1deb4d3b7d4bad9bdd2b0d7b3dcb6d025830000306090c0f1215181b1e2124272a2d303336393c3f4245484b4e5154575a5d606366696c6f7275787b7e8184878a8d0302040105d90130a2018a182cf5183cf500f500f400f4021a1111111106549858effd232b4033e47d90003d41ec34ecaeda94076b5061726974792054657374"
+    },
+    {
+      "name": "chain_id_over_u32",
+      "props": {
+        "requestId": "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d",
+        "signDataHex": "000306090c0f1215181b1e2124272a2d303336393c3f4245484b4e5154575a5d606366696c6f7275787b7e8184878a8d",
+        "dataType": 1,
+        "path": "m/44'/60'/0'/0/0",
+        "xfp": "11111111",
+        "chainId": 4294967296
+      },
+      "throws": "invalid-props"
+    }
+  ],
+  "replies": [
+    {
+      "name": "parity_v",
+      "requestName": "tx_legacy_chain137",
+      "replyUr": "ur:eth-signature/oeadtpdagdndcawmgtfrkigrpmndutdnbtkgfssbjnaohdfpdybttyotoyimrkdkdmhpplwtytjkiyjljtemcljlwttdvdkilaemvlrfecskdypebkzcuycljthefgvtwdytcevssfvomhglnyttlofmpflocmykcyhncffgwzwfresradkedlwdeh",
+      "parsed": {
+        "requestIdHex": "9b1deb4d3b7d4bad9bdd2b0d7b3dcb6d",
+        "signatureHex": "300dd4a3a16abb242e5baef0f973666f6e37216ff0d2e77d8037e3bc35c530af0afddb216e5f46e0eaf91ce8cce2904e9ad1883eb08816f51a601946f2f3b5c301",
+        "rHex": "300dd4a3a16abb242e5baef0f973666f6e37216ff0d2e77d8037e3bc35c530af",
+        "sHex": "0afddb216e5f46e0eaf91ce8cce2904e9ad1883eb08816f51a601946f2f3b5c3",
+        "v": "1",
+        "recoveryId": 1
+      },
+      "verify": {
+        "signDataHex": "000306090c0f1215181b1e2124272a2d303336393c3f4245484b4e5154575a5d606366696c6f7275787b7e8184878a8d",
+        "dataType": 1,
+        "addressHex": "9858effd232b4033e47d90003d41ec34ecaeda94",
+        "verdict": "ok-checked"
+      }
+    },
+    {
+      "name": "legacy_multibyte_v",
+      "requestName": "tx_legacy_chain137",
+      "replyUr": "ur:eth-signature/oeadtpdagdndcawmgtfrkigrpmndutdnbtkgfssbjnaohdfwdybttyotoyimrkdkdmhpplwtytjkiyjljtemcljlwttdvdkilaemvlrfecskdypebkzcuycljthefgvtwdytcevssfvomhglnyttlofmpflocmykcyhncffgwzwfresradenaeptlbjn",
+      "parsed": {
+        "requestIdHex": "9b1deb4d3b7d4bad9bdd2b0d7b3dcb6d",
+        "signatureHex": "300dd4a3a16abb242e5baef0f973666f6e37216ff0d2e77d8037e3bc35c530af0afddb216e5f46e0eaf91ce8cce2904e9ad1883eb08816f51a601946f2f3b5c30136",
+        "rHex": "300dd4a3a16abb242e5baef0f973666f6e37216ff0d2e77d8037e3bc35c530af",
+        "sHex": "0afddb216e5f46e0eaf91ce8cce2904e9ad1883eb08816f51a601946f2f3b5c3",
+        "v": "310",
+        "recoveryId": 1
+      },
+      "verify": {
+        "signDataHex": "000306090c0f1215181b1e2124272a2d303336393c3f4245484b4e5154575a5d606366696c6f7275787b7e8184878a8d",
+        "dataType": 1,
+        "addressHex": "9858effd232b4033e47d90003d41ec34ecaeda94",
+        "verdict": "ok-checked"
+      }
+    },
+    {
+      "name": "personal_v27",
+      "requestName": "personal_message",
+      "replyUr": "ur:eth-signature/oeadtpdagdndcawmgtfrkigrpmndutdnbtkgfssbjnaohdfpfyrshyndhdmwcnasdyaxgyhykietlydmihoylavdnbuoseyladvlbawysrihfmmujtimnbwzsrcwgswsmedaketyolsedluyclaakiimhyrljnnspebntyselsleaobncwdnjzlklb",
+      "parsed": {
+        "requestIdHex": "9b1deb4d3b7d4bad9bdd2b0d7b3dcb6d",
+        "signatureHex": "44bf5e9b589423093003515e7d38812e65a180e7a0dcc1f701e30eeec3653e936e6aa0f2c31b4cef91257cd4a6c12fdb21047d6a5eb76d9caf0cd4c1838a020c1b",
+        "rHex": "44bf5e9b589423093003515e7d38812e65a180e7a0dcc1f701e30eeec3653e93",
+        "sHex": "6e6aa0f2c31b4cef91257cd4a6c12fdb21047d6a5eb76d9caf0cd4c1838a020c",
+        "v": "27",
+        "recoveryId": 0
+      },
+      "verify": {
+        "signDataHex": "000306090c0f1215181b1e2124272a2d303336393c3f4245484b4e5154575a5d606366696c6f7275787b7e8184878a8d",
+        "dataType": 3,
+        "addressHex": "9858effd232b4033e47d90003d41ec34ecaeda94",
+        "verdict": "ok-checked"
+      }
+    },
+    {
+      "name": "typed_data_unverifiable",
+      "requestName": "typed_data",
+      "replyUr": "ur:eth-signature/oeadtpdagdndcawmgtfrkigrpmndutdnbtkgfssbjnaohdfpdybttyotoyimrkdkdmhpplwtytjkiyjljtemcljlwttdvdkilaemvlrfecskdypebkzcuycljthefgvtwdytcevssfvomhglnyttlofmpflocmykcyhncffgwzwfresradkedlwdeh",
+      "parsed": {
+        "requestIdHex": "9b1deb4d3b7d4bad9bdd2b0d7b3dcb6d",
+        "signatureHex": "300dd4a3a16abb242e5baef0f973666f6e37216ff0d2e77d8037e3bc35c530af0afddb216e5f46e0eaf91ce8cce2904e9ad1883eb08816f51a601946f2f3b5c301",
+        "rHex": "300dd4a3a16abb242e5baef0f973666f6e37216ff0d2e77d8037e3bc35c530af",
+        "sHex": "0afddb216e5f46e0eaf91ce8cce2904e9ad1883eb08816f51a601946f2f3b5c3",
+        "v": "1",
+        "recoveryId": 1
+      },
+      "verify": {
+        "signDataHex": "000306090c0f1215181b1e2124272a2d303336393c3f4245484b4e5154575a5d606366696c6f7275787b7e8184878a8d",
+        "dataType": 2,
+        "addressHex": "9858effd232b4033e47d90003d41ec34ecaeda94",
+        "verdict": "ok-unchecked"
+      }
+    },
+    {
+      "name": "wrong_request_id_echo",
+      "requestName": "tx_legacy_chain137",
+      "replyUr": "ur:eth-signature/oeadtpdagdnlnlnlnlnlnlnlnlnlnlnlnlnlnlnlnlaohdfpdybttyotoyimrkdkdmhpplwtytjkiyjljtemcljlwttdvdkilaemvlrfecskdypebkzcuycljthefgvtwdytcevssfvomhglnyttlofmpflocmykcyhncffgwzwfresradhhnbrhsb",
+      "expect": "throws:request-id-mismatch"
+    },
+    {
+      "name": "substituted_payload",
+      "requestName": "tx_legacy_chain137",
+      "replyUr": "ur:eth-signature/oeadtpdagdndcawmgtfrkigrpmndutdnbtkgfssbjnaohdfphtatlbdrpkutfspyhylrfgvsmhhedmsfptfddkjpfnrdzsmklofphybnyaeedelfatrdzsadnnoxtkkobbwmmtlatkmtlfhlbdlyvsuebeclihlkbwnbiykkswvdehonaezocpoeol",
+      "parsed": {
+        "requestIdHex": "9b1deb4d3b7d4bad9bdd2b0d7b3dcb6d",
+        "signatureHex": "5a077f2aaadd3dab5e8446e8905f2ecca94824723cbafa9888415e0cf834288207bafa019ea4cf7614eb9680cf96825d0b81e8de1021658c13a06679c6e731a500",
+        "rHex": "5a077f2aaadd3dab5e8446e8905f2ecca94824723cbafa9888415e0cf8342882",
+        "sHex": "07bafa019ea4cf7614eb9680cf96825d0b81e8de1021658c13a06679c6e731a5",
+        "v": "0",
+        "recoveryId": 0
+      },
+      "verify": {
+        "signDataHex": "000306090c0f1215181b1e2124272a2d303336393c3f4245484b4e5154575a5d606366696c6f7275787b7e8184878a8d",
+        "dataType": 1,
+        "addressHex": "9858effd232b4033e47d90003d41ec34ecaeda94",
+        "verdict": "verify:false"
+      }
+    },
+    {
+      "name": "corrupted_signature",
+      "requestName": "tx_legacy_chain137",
+      "replyUr": "ur:eth-signature/oeadtpdagdndcawmgtfrkigrpmndutdnbtkgfssbjnaohdfpdybttyotoyimrkdkdmhpplwtytjkiyjljtemcljlwttdvdkilaemvlrfecskdypebkzcuycljthefgvtwdytcevssfvomhglnyttlofmpflocmykcyhncffgwzwfresaadiheeuyjo",
+      "parsed": {
+        "requestIdHex": "9b1deb4d3b7d4bad9bdd2b0d7b3dcb6d",
+        "signatureHex": "300dd4a3a16abb242e5baef0f973666f6e37216ff0d2e77d8037e3bc35c530af0afddb216e5f46e0eaf91ce8cce2904e9ad1883eb08816f51a601946f2f3b5c201",
+        "rHex": "300dd4a3a16abb242e5baef0f973666f6e37216ff0d2e77d8037e3bc35c530af",
+        "sHex": "0afddb216e5f46e0eaf91ce8cce2904e9ad1883eb08816f51a601946f2f3b5c2",
+        "v": "1",
+        "recoveryId": 1
+      },
+      "verify": {
+        "signDataHex": "000306090c0f1215181b1e2124272a2d303336393c3f4245484b4e5154575a5d606366696c6f7275787b7e8184878a8d",
+        "dataType": 1,
+        "addressHex": "9858effd232b4033e47d90003d41ec34ecaeda94",
+        "verdict": "verify:false"
+      }
+    }
+  ]
+}

@@ -1,0 +1,98 @@
+{
+  "requests": [
+    {
+      "name": "signRequestObject",
+      "props": {
+        "transaction": {
+          "TransactionType": "Payment",
+          "Account": "rMYQaEBLwyvSmDoRnH2tsqGE2LK4S3Rdap",
+          "Destination": "rGWrZyQqhTp9Xu7G5Pkayo7bXjH4k4QYpf",
+          "Amount": "1000",
+          "Fee": "12",
+          "Sequence": 1,
+          "SigningPubKey": "03e3327a1167324461e9b94acf2dbd0afc5e6dca4a6e209e6ce0a87265e81a5044"
+        }
+      },
+      "urType": "bytes",
+      "cborHex": "58fc7b225472616e73616374696f6e54797065223a225061796d656e74222c224163636f756e74223a22724d59516145424c777976536d446f526e48327473714745324c4b34533352646170222c2244657374696e6174696f6e223a22724757725a795171685470395875374735506b61796f3762586a48346b3451597066222c22416d6f756e74223a2231303030222c22466565223a223132222c2253657175656e6365223a312c225369676e696e675075624b6579223a22303365333332376131313637333234343631653962393461636632646264306166633565366463613461366532303965366365306138373236356538316135303434227d",
+      "requestIdAbsent": true
+    },
+    {
+      "name": "signRequestString",
+      "props": {
+        "transactionJson": "{ \"TransactionType\": \"Payment\", \"Account\": \"rMYQaEBLwyvSmDoRnH2tsqGE2LK4S3Rdap\", \"Fee\": \"12\", \"Sequence\": 7, \"SigningPubKey\": \"03e3327a1167324461e9b94acf2dbd0afc5e6dca4a6e209e6ce0a87265e81a5044\" }"
+      },
+      "urType": "bytes",
+      "cborHex": "58c47b20225472616e73616374696f6e54797065223a20225061796d656e74222c20224163636f756e74223a2022724d59516145424c777976536d446f526e48327473714745324c4b34533352646170222c2022466565223a20223132222c202253657175656e6365223a20372c20225369676e696e675075624b6579223a202230336533333237613131363733323434363165396239346163663264626430616663356536646361346136653230396536636530613837323635653831613530343422207d",
+      "requestIdAbsent": true
+    }
+  ],
+  "replies": [
+    {
+      "name": "signedReply",
+      "requestName": "signRequestObject",
+      "ur": "ur:bytes/hdprbgaeaedkaeaeaeadhsfzaeaeaeaeaeaxvsisfzaeaeaeaeaeaebnjkclaxvleyknbyioeyfyhswlrhgetkdprybkzthyjnsggejtcxnnjzvtpdjpihvscygdfyjyfldyfeaoclaewksobkoxqzkomnctidesadjzfzbsecfhisuycwltgosgykwprhfzespkltckhdhnaocxfxotfpsslolfvodetdvwossbgrbkjeievwsspkidrdcluyuotbprwtksaecnksdylybbpkpkpkpkpkpkpkpkpkpkpkpkpkpkpkpkpkpkpkpklsbbrkrkrkrkrkrkrkrkrkrkrkrkrkrkrkrkrkrkrkrkdssomwet",
+      "parsed": {
+        "signedTxHex": "12000024000000016140000000000003e868400000000000000c732103e3327a1167324461e9b94acf2dbd0afc5e6dca4a6e209e6ce0a87265e81a504474473045022100f4c90aa4b4768e1f6239016c400f353f68db1b8755caf5ecb94039aa871e5860022043a341c48882e228d2e5a7cb4b0a6b64e5c4aa62ba21dbdcd6b2f078002378308114aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa8314bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+      },
+      "verify": {
+        "expectedSigningPubKey": "03e3327a1167324461e9b94acf2dbd0afc5e6dca4a6e209e6ce0a87265e81a5044"
+      },
+      "expect": "verify:true"
+    },
+    {
+      "name": "tamperedPayload",
+      "requestName": "signRequestObject",
+      "ur": "ur:bytes/hdprbgaeaedkaoaeaeadhsfzaeaeaeaeaeaxvsisfzaeaeaeaeaeaebnjkclaxvleyknbyioeyfyhswlrhgetkdprybkzthyjnsggejtcxnnjzvtpdjpihvscygdfyjyfldyfeaoclaewksobkoxqzkomnctidesadjzfzbsecfhisuycwltgosgykwprhfzespkltckhdhnaocxfxotfpsslolfvodetdvwossbgrbkjeievwsspkidrdcluyuotbprwtksaecnksdylybbpkpkpkpkpkpkpkpkpkpkpkpkpkpkpkpkpkpkpkpklsbbrkrkrkrkrkrkrkrkrkrkrkrkrkrkrkrkrkrkrkrkzonbrhce",
+      "parsed": {
+        "signedTxHex": "12000024020000016140000000000003e868400000000000000c732103e3327a1167324461e9b94acf2dbd0afc5e6dca4a6e209e6ce0a87265e81a504474473045022100f4c90aa4b4768e1f6239016c400f353f68db1b8755caf5ecb94039aa871e5860022043a341c48882e228d2e5a7cb4b0a6b64e5c4aa62ba21dbdcd6b2f078002378308114aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa8314bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+      },
+      "verify": {
+        "expectedSigningPubKey": "03e3327a1167324461e9b94acf2dbd0afc5e6dca4a6e209e6ce0a87265e81a5044"
+      },
+      "expect": "verify:false"
+    },
+    {
+      "name": "wrongExpectedKey",
+      "requestName": "signRequestObject",
+      "ur": "ur:bytes/hdprbgaeaedkaeaeaeadhsfzaeaeaeaeaeaxvsisfzaeaeaeaeaeaebnjkclaxvleyknbyioeyfyhswlrhgetkdprybkzthyjnsggejtcxnnjzvtpdjpihvscygdfyjyfldyfeaoclaewksobkoxqzkomnctidesadjzfzbsecfhisuycwltgosgykwprhfzespkltckhdhnaocxfxotfpsslolfvodetdvwossbgrbkjeievwsspkidrdcluyuotbprwtksaecnksdylybbpkpkpkpkpkpkpkpkpkpkpkpkpkpkpkpkpkpkpkpklsbbrkrkrkrkrkrkrkrkrkrkrkrkrkrkrkrkrkrkrkrkdssomwet",
+      "parsed": {
+        "signedTxHex": "12000024000000016140000000000003e868400000000000000c732103e3327a1167324461e9b94acf2dbd0afc5e6dca4a6e209e6ce0a87265e81a504474473045022100f4c90aa4b4768e1f6239016c400f353f68db1b8755caf5ecb94039aa871e5860022043a341c48882e228d2e5a7cb4b0a6b64e5c4aa62ba21dbdcd6b2f078002378308114aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa8314bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+      },
+      "verify": {
+        "expectedSigningPubKey": "02eb8923285ce7fffd0519a6f7c6a53c34b0c4227987454bc0a320842256b577dd"
+      },
+      "expect": "verify:false"
+    },
+    {
+      "name": "exoticFieldReply",
+      "requestName": "signRequestObject",
+      "ur": "ur:bytes/hdrkecaeaeaeaeaeaeaeadbgaeaedkaeaeaeadhsfzaeaeaeaeaeaxvsisfzaeaeaeaeaeaebnjkclaxvleyknbyioeyfyhswlrhgetkdprybkzthyjnsggejtcxnnjzvtpdjpihvscygdfyjyfldyfeaoclaewksobkoxqzkomnctidesadjzfzbsecfhisuycwltgosgykwprhfzespkltckhdhnaocxfxotfpsslolfvodetdvwossbgrbkjeievwsspkidrdcluyuotbprwtksaecnksdylybbpkpkpkpkpkpkpkpkpkpkpkpkpkpkpkpkpkpkpkpklsbbrkrkrkrkrkrkrkrkrkrkrkrkrkrkrkrkrkrkrkrkbksrlezm",
+      "parsed": {
+        "signedTxHex": "35000000000000000112000024000000016140000000000003e868400000000000000c732103e3327a1167324461e9b94acf2dbd0afc5e6dca4a6e209e6ce0a87265e81a504474473045022100f4c90aa4b4768e1f6239016c400f353f68db1b8755caf5ecb94039aa871e5860022043a341c48882e228d2e5a7cb4b0a6b64e5c4aa62ba21dbdcd6b2f078002378308114aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa8314bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+      },
+      "verify": {
+        "expectedSigningPubKey": "03e3327a1167324461e9b94acf2dbd0afc5e6dca4a6e209e6ce0a87265e81a5044"
+      },
+      "expect": "verify:unverifiable"
+    },
+    {
+      "name": "wrongUrType",
+      "requestName": "signRequestObject",
+      "ur": "ur:eth-signature/hdprbgaeaedkaeaeaeadhsfzaeaeaeaeaeaxvsisfzaeaeaeaeaeaebnjkclaxvleyknbyioeyfyhswlrhgetkdprybkzthyjnsggejtcxnnjzvtpdjpihvscygdfyjyfldyfeaoclaewksobkoxqzkomnctidesadjzfzbsecfhisuycwltgosgykwprhfzespkltckhdhnaocxfxotfpsslolfvodetdvwossbgrbkjeievwsspkidrdcluyuotbprwtksaecnksdylybbpkpkpkpkpkpkpkpkpkpkpkpkpkpkpkpkpkpkpkpklsbbrkrkrkrkrkrkrkrkrkrkrkrkrkrkrkrkrkrkrkrkdssomwet",
+      "expect": "throws:wrong-ur-type"
+    },
+    {
+      "name": "emptyBytesReply",
+      "requestName": "signRequestObject",
+      "ur": "ur:bytes/fzoxueplca",
+      "expect": "throws:malformed-reply"
+    },
+    {
+      "name": "notBytesReply",
+      "requestName": "signRequestObject",
+      "ur": "ur:bytes/jsjtjljycxhscxidkkjyihcxjkjyjpinjtionlftcxto",
+      "expect": "throws:malformed-reply"
+    }
+  ]
+}

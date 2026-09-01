@@ -1,0 +1,122 @@
+{
+  "chain": "cosmos",
+  "requests": [
+    {
+      "method": "generateSignRequest",
+      "props": {
+        "requestId": "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d",
+        "signDataHex": "7b226163636f756e745f6e756d626572223a2237222c22636861696e5f6964223a22636f736d6f736875622d34222c22666565223a7b22616d6f756e74223a5b5d2c22676173223a22323030303030227d2c226d656d6f223a22222c226d736773223a5b5d2c2273657175656e6365223a2231227d",
+        "dataType": 1,
+        "path": "m/44'/118'/0'/0/0",
+        "xfp": 1942346250,
+        "address": "cosmos19rl4cm2hmr8afy4kldpxz3fka4jguq0auqdal4"
+      },
+      "urType": "cosmos-sign-request",
+      "cborHex": "a601d825509b1deb4d3b7d4bad9bdd2b0d7b3dcb6d0258757b226163636f756e745f6e756d626572223a2237222c22636861696e5f6964223a22636f736d6f736875622d34222c22666565223a7b22616d6f756e74223a5b5d2c22676173223a22323030303030227d2c226d656d6f223a22222c226d736773223a5b5d2c2273657175656e6365223a2231227d03010481d90130a2018a182cf51876f500f500f400f4021a73c5da0a0581782d636f736d6f733139726c34636d32686d7238616679346b6c6470787a33666b61346a6775713061757164616c34066b45524120436f6e6e656374"
+    },
+    {
+      "method": "generateSignRequest",
+      "props": {
+        "requestId": "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d",
+        "signDataHex": "7b22636861696e5f6964223a22222c226d736773223a5b7b2274797065223a227369676e2f4d73675369676e44617461227d5d7d",
+        "dataType": 4,
+        "path": "m/44'/118'/0'/0/0",
+        "xfp": "73c5da0a",
+        "origin": "Parity Fixture"
+      },
+      "urType": "cosmos-sign-request",
+      "cborHex": "a501d825509b1deb4d3b7d4bad9bdd2b0d7b3dcb6d0258347b22636861696e5f6964223a22222c226d736773223a5b7b2274797065223a227369676e2f4d73675369676e44617461227d5d7d03040481d90130a2018a182cf51876f500f500f400f4021a73c5da0a066e5061726974792046697874757265"
+    },
+    {
+      "method": "generateEthermintSignRequest",
+      "props": {
+        "requestId": "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d",
+        "signDataHex": "7b226163636f756e745f6e756d626572223a2237222c22636861696e5f6964223a22636f736d6f736875622d34222c22666565223a7b22616d6f756e74223a5b5d2c22676173223a22323030303030227d2c226d656d6f223a22222c226d736773223a5b5d2c2273657175656e6365223a2231227d",
+        "dataType": 1,
+        "path": "m/44'/60'/0'/0/0",
+        "xfp": "73c5da0a"
+      },
+      "urType": "evm-sign-request",
+      "cborHex": "a601d825509b1deb4d3b7d4bad9bdd2b0d7b3dcb6d0258757b226163636f756e745f6e756d626572223a2237222c22636861696e5f6964223a22636f736d6f736875622d34222c22666565223a7b22616d6f756e74223a5b5d2c22676173223a22323030303030227d2c226d656d6f223a22222c226d736773223a5b5d2c2273657175656e6365223a2231227d0302040005d90130a2018a182cf5183cf500f500f400f4021a73c5da0a076b45524120436f6e6e656374"
+    },
+    {
+      "method": "generateEthermintSignRequest",
+      "props": {
+        "requestId": "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d",
+        "signDataHex": "0a0f0a0d636f736d6f732d7369676e120973696d2d646972656374",
+        "dataType": 2,
+        "path": "m/44'/60'/0'/0/0",
+        "xfp": 1942346250,
+        "address": "0x9858effd232b4033e47d90003d41ec34ecaeda94",
+        "origin": "Parity Fixture"
+      },
+      "urType": "evm-sign-request",
+      "cborHex": "a701d825509b1deb4d3b7d4bad9bdd2b0d7b3dcb6d02581b0a0f0a0d636f736d6f732d7369676e120973696d2d6469726563740303040005d90130a2018a182cf5183cf500f500f400f4021a73c5da0a06582a307839383538656666643233326234303333653437643930303033643431656333346563616564613934076e5061726974792046697874757265"
+    }
+  ],
+  "replies": [
+    {
+      "name": "cosmos-signature",
+      "requestIndex": 0,
+      "ur": "ur:cosmos-signature/otadtpdagdndcawmgtfrkigrpmndutdnbtkgfssbjnaohdfztbgwdnkklseoetiyvlosiazovapesalgkkimasqdcfaylnadbslfhhbslyecjsfhflcawlgmbspdkotytkflolsoksahckckchsadicytputothpmhlkrftyyacfplkeaxhdclaogwgldrtanseetbbdndoldefnmwehpdfpleyaioeybgmtctmsoskgiaktzttihpidzowldyah",
+      "parsed": {
+        "requestIdHex": "9b1deb4d3b7d4bad9bdd2b0d7b3dcb6d",
+        "signatureHex": "d64f2b7983333866e3a763fbe6afc28d796a09b3190886010f825c0f8135713f471de9520fa876d4cf47a6c978051e1e17c2271ad8dda35b908cbcd4f819ae7c",
+        "publicKeyHex": "024f4e2ad99c34d60b9ba6283c9431a8418af8673212961f97a77b6377fcd05b62"
+      },
+      "verify": {
+        "signDataHex": "7b226163636f756e745f6e756d626572223a2237222c22636861696e5f6964223a22636f736d6f736875622d34222c22666565223a7b22616d6f756e74223a5b5d2c22676173223a22323030303030227d2c226d656d6f223a22222c226d736773223a5b5d2c2273657175656e6365223a2231227d",
+        "digest": "sha256",
+        "signatureHex": "d64f2b7983333866e3a763fbe6afc28d796a09b3190886010f825c0f8135713f471de9520fa876d4cf47a6c978051e1e17c2271ad8dda35b908cbcd4f819ae7c",
+        "publicKeyHex": "024f4e2ad99c34d60b9ba6283c9431a8418af8673212961f97a77b6377fcd05b62",
+        "expectedPublicKeyHex": "024f4e2ad99c34d60b9ba6283c9431a8418af8673212961f97a77b6377fcd05b62"
+      },
+      "verdict": "verify:true"
+    },
+    {
+      "name": "evm-signature",
+      "requestIndex": 3,
+      "ur": "ur:evm-signature/oeadtpdagdndcawmgtfrkigrpmndutdnbtkgfssbjnaohdfzlblkesnekbdnqdrfkenetykehycfryonnynswkidlbnbwlmwcsjouowzeyjotygodytnnefnttidkkaehfrywftdiofdrhwlvlttksgurhzelkinltrsnebkcfnbcaesnycpprhl",
+      "parsed": {
+        "requestIdHex": "9b1deb4d3b7d4bad9bdd2b0d7b3dcb6d",
+        "signatureHex": "7f8c399f7e2bb3bc7c9fd47c5e19bda59a9cf4627fa0e9941870dcf23270d45530da9f3cd162790056bdf3d26748b9e9e3d17853b9fe8c6987bf9f0a19a01d39",
+        "publicKeyHex": null
+      },
+      "verify": {
+        "signDataHex": "0a0f0a0d636f736d6f732d7369676e120973696d2d646972656374",
+        "digest": "keccak256",
+        "signatureHex": "7f8c399f7e2bb3bc7c9fd47c5e19bda59a9cf4627fa0e9941870dcf23270d45530da9f3cd162790056bdf3d26748b9e9e3d17853b9fe8c6987bf9f0a19a01d39",
+        "publicKeyHex": "0237b0bb7a8288d38ed49a524b5dc98cff3eb5ca824c9f9dc0dfdb3d9cd600f299"
+      },
+      "verdict": "verify:true"
+    }
+  ],
+  "tampered": [
+    {
+      "name": "wrong-request-id-echo",
+      "requestIndex": 0,
+      "ur": "ur:cosmos-signature/otadtpdagdndcawmgtfrkigrpmndutdnbtkgfssbjzaohdfztbgwdnkklseoetiyvlosiazovapesalgkkimasqdcfaylnadbslfhhbslyecjsfhflcawlgmbspdkotytkflolsoksahckckchsadicytputothpmhlkrftyyacfplkeaxhdclaogwgldrtanseetbbdndoldefnmwehpdfpleyaioeybgmtctmsoskgiaktzttihpidylhgwtvs",
+      "expect": "throws:request-id-mismatch"
+    },
+    {
+      "name": "corrupted-signature",
+      "verify": {
+        "signDataHex": "7b226163636f756e745f6e756d626572223a2237222c22636861696e5f6964223a22636f736d6f736875622d34222c22666565223a7b22616d6f756e74223a5b5d2c22676173223a22323030303030227d2c226d656d6f223a22222c226d736773223a5b5d2c2273657175656e6365223a2231227d",
+        "digest": "sha256",
+        "signatureHex": "d64f2b7983333866e3a79cfbe6afc28d796a09b3190886010f825c0f8135713f471de9520fa876d4cf47a6c978051e1e17c2271ad8dda35b908cbcd4f819ae7c",
+        "publicKeyHex": "024f4e2ad99c34d60b9ba6283c9431a8418af8673212961f97a77b6377fcd05b62"
+      },
+      "expect": "verify:false"
+    },
+    {
+      "name": "substituted-payload",
+      "verify": {
+        "signDataHex": "0a0f0a0d636f736d6f732d7369676e120973696d2d646972656374",
+        "digest": "sha256",
+        "signatureHex": "d64f2b7983333866e3a763fbe6afc28d796a09b3190886010f825c0f8135713f471de9520fa876d4cf47a6c978051e1e17c2271ad8dda35b908cbcd4f819ae7c",
+        "publicKeyHex": "024f4e2ad99c34d60b9ba6283c9431a8418af8673212961f97a77b6377fcd05b62"
+      },
+      "expect": "verify:false"
+    }
+  ]
+}

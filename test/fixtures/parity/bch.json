@@ -1,0 +1,176 @@
+{
+ "requests": [
+  {
+   "name": "signRequest",
+   "urType": "keystone-sign-request",
+   "origin": "ERA Connect",
+   "protoHex": "0802120f5172436f64652050726f746f636f6c1ae50208021208313233343536373822d6020a03424348122439623164656234642d336237642d346261642d396264642d3262306437623364636236642080d095ffbc312808529f0208e80710a204229d010a40313432663532623764313039343337343033653530623166663733386235626135643164633830633731623764343863396563613334376361363661313434611890a10f22423032626265376462636466386232323631353330613836376466373138306231376139306234383266373466323733366238613330643366373536653432653231372a116d2f3434272f313435272f30272f302f302a300a2a7171797834396d75306b6b6e396674666a36686a6536673277666572333479666e7135746168713371361080f1042a450a2a7172386165686172757079726d68667530643474646d736e6335793863666b343779367172736a73727810a8a80a180122116d2f3434272f313435272f30272f312f30",
+   "props": {
+    "requestId": "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d",
+    "inputs": [
+     {
+      "txid": "142f52b7d109437403e50b1ff738b5ba5d1dc80c71b7d48c9eca347ca66a144a",
+      "index": 0,
+      "value": 250000,
+      "publicKeyHex": "02bbe7dbcdf8b2261530a867df7180b17a90b482f74f2736b8a30d3f756e42e217",
+      "path": "m/44'/145'/0'/0/0"
+     }
+    ],
+    "outputs": [
+     {
+      "address": "qqyx49mu0kkn9ftfj6hje6g2wfer34yfnq5tahq3q6",
+      "value": 80000
+     },
+     {
+      "address": "qr8aeharupyrmhfu0d4tdmsnc5y8cfk47y6qrsjsrx",
+      "value": 169000,
+      "isChange": true,
+      "changeAddressPath": "m/44'/145'/0'/1/0"
+     }
+    ],
+    "fee": 1000,
+    "xfp": 305419896,
+    "timestamp": 1700000000000
+   }
+  },
+  {
+   "name": "signRequestCanonicalized",
+   "urType": "keystone-sign-request",
+   "origin": "Parity Harness",
+   "protoHex": "0802120f5172436f64652050726f746f636f6c1afe0208021208313233343536373822ef020a03424348122439623164656234642d336237642d346261642d396264642d3262306437623364636236642080d095ffbc31280852b80208d00f10d8041a0b706172697479206d656d6f229d010a40313432663532623764313039343337343033653530623166663733386235626135643164633830633731623764343863396563613334376361363661313434611890a10f22423032626265376462636466386232323631353330613836376466373138306231376139306234383266373466323733366238613330643366373536653432653231372a116d2f3434272f313435272f30272f302f302a3c0a36626974636f696e636173683a7171797834396d75306b6b6e396674666a36686a6536673277666572333479666e7135746168713371361080f1042a450a2a7172386165686172757079726d68667530643474646d736e6335793863666b343779367172736a73727810c0a00a180122116d2f3434272f313435272f30272f312f30",
+   "props": {
+    "requestId": "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d",
+    "inputs": [
+     {
+      "txid": "142f52b7d109437403e50b1ff738b5ba5d1dc80c71b7d48c9eca347ca66a144a",
+      "index": 0,
+      "value": 250000,
+      "publicKeyHex": "02bbe7dbcdf8b2261530a867df7180b17a90b482f74f2736b8a30d3f756e42e217",
+      "path": "m/44'/145'/0'/0/0"
+     }
+    ],
+    "outputs": [
+     {
+      "address": "BITCOINCASH:QQYX49MU0KKN9FTFJ6HJE6G2WFER34YFNQ5TAHQ3Q6",
+      "value": 80000
+     },
+     {
+      "address": "qr8aeharupyrmhfu0d4tdmsnc5y8cfk47y6qrsjsrx",
+      "value": 168000,
+      "isChange": true,
+      "changeAddressPath": "m/44'/145'/0'/1/0"
+     }
+    ],
+    "fee": 2000,
+    "dustThreshold": 600,
+    "memo": "parity memo",
+    "xfp": 305419896,
+    "timestamp": 1700000000000,
+    "origin": "Parity Harness"
+   }
+  }
+ ],
+ "replies": [
+  {
+   "name": "signedReply",
+   "requestName": "signRequest",
+   "ur": "ur:keystone-sign-result/oyadhkadkictluayaeaeaeaeaeaoaxihmeesmnbbfzbnfelpmknbclfpwdjocpaotdmtrfgotadsvodrhypkbgdkfgdwasosvoamfycelkimrpaadimnztztmssbqdwmpyylwmwmvddlgwcttbwmmynewdpttsvlylltsbluwmahldihgsrerlurckhyrnwnsshydtkivltyrngafgurfnrkjlmwtinyuomdqdpewseevdfwckkgrpretktthdlyglihvtnspfehlrimchfggwmtueplmkmhiaoymtvtvydiwzvlmyvdlawtkggdaoihfggsdpmtbkhehfdpptlegdihtpoteojppfjnskbtrhampfledyksiawdcxtndelbetdygulkfpambecakorhtemoaxdkcpateehycxpfinnbtstamniacngmaymwdalgdmtsuosarydivesflykgcabksfuesbykhdhywfjocstdhfhnrpvdprfptpcmdwhpmncahholcfsbsptbadpdmtechkwkbgfngedejkinioykfmneisvohnayndtnstmhfpoelnsrbyglhpihmuwzsffxlpvapmiadmoyfepdrkylpeadeyhnzomsuyfsfttscfkbbgpfqdtohpweisolcstekiswolhtbaoyoxsstbidwyiycmfevaaowkfhotkoctldjsmysororkrhglsojspsneoejelainttwpbwtnntwnylyndifnotfsasghaoaeaeiahnbsba",
+   "parsed": {
+    "requestIdHex": "9b1deb4d3b7d4bad9bdd2b0d7b3dcb6d",
+    "txId": "7b6e135f6d8d965d1ca192c8093b0f1a42cfc1ad634df971b0b5e17c419b1b13",
+    "rawTxHex": "01000000014a146aa67c34ca9e8cd4b7710cc81d5dbab538f71f0be503744309d1b7522f14000000006b483045022100c992e44ca22290183e040f2519c40f915f112a40c8b25dc97bf43df60b6b51fe02206dfe97cb6e6ca230b8ea1bd9be8521d8a34f4b131e87bae828ef6077c8d28ade412102bbe7dbcdf8b2261530a867df7180b17a90b482f74f2736b8a30d3f756e42e217fdffffff0280380100000000001976a914086a977c7dad32a56996af2ce90a727238d4899888ac28940200000000001976a914cfdcdfa3e0483ddd3c7b6ab6ee13c5087c26d5f188ac00000000"
+   },
+   "verify": {
+    "inputs": [
+     {
+      "txid": "142f52b7d109437403e50b1ff738b5ba5d1dc80c71b7d48c9eca347ca66a144a",
+      "index": 0,
+      "value": 250000,
+      "publicKeyHex": "02bbe7dbcdf8b2261530a867df7180b17a90b482f74f2736b8a30d3f756e42e217"
+     }
+    ],
+    "outputs": [
+     {
+      "address": "qqyx49mu0kkn9ftfj6hje6g2wfer34yfnq5tahq3q6",
+      "value": 80000
+     },
+     {
+      "address": "qr8aeharupyrmhfu0d4tdmsnc5y8cfk47y6qrsjsrx",
+      "value": 169000
+     }
+    ],
+    "txId": "7b6e135f6d8d965d1ca192c8093b0f1a42cfc1ad634df971b0b5e17c419b1b13"
+   },
+   "expect": "verify:true"
+  },
+  {
+   "name": "wrongRequestIdEcho",
+   "requestName": "signRequest",
+   "ur": "ur:keystone-sign-result/oyadhkadksctluayaeaeaeaeaeaoaxihmefrjtbzfzbnfelpfdbyismhgmoloenbfeprfsnnpagtskhfztcfemfdfykecyhfskbapdhdcswfnnwzisvosatbbbjkkewsykzcpyltktheynpectfhnernwyylurrnvdguwestfhktyljlckwymeamtkdazswlylutuybswthhctpelgdlgtjltkhpfskemthdcwstwpgohtrpiyhsftcyonlflglafgiosgglwkhtlspygtdycxvafggafgbdbncemylbheaxfmtemhcakkrhdlsosewlrpeclufxaaclgupaiylpstcetnlfbtpadibnhsckhnlpclmupdwnoewnhtdnhdatwtaaoesrgleotnkelafyielaftendyeegtqzfntejoencpesfximtipseeldvagyrycxhfgswpkidepfpkrlgackqdwmjoamlrjtstdelupmmupftyatemctfrrogosarlmowyaxbegadpgmpesnksmwgdssmtlepsfmndisvycevtrdoxmncllpfzjslscnnshtrogaswlefxlpcydpjkjnolgtdehlkidpcxlpoyzmjkrkfyiopruoglaoknswhkdnvwecspvdeyhpuemwuyrtlplrlncmpynlpkknmocyaxryieietsmevsmsmkjyghtlspjkiefhtbtkoyjklfgetdpkbwtnlpjszozobssoaaimeoghaoaeaevlztaehe",
+   "expect": "throws:request-id-mismatch"
+  },
+  {
+   "name": "corruptedSignature",
+   "requestName": "signRequest",
+   "ur": "ur:keystone-sign-result/oyadhkadkictluayaeaeaeaeaeaoaxihmeesmnbbfzbnfelpmknbclfpwdjocpaotdmtrfgotadsvodrhypkbgdkfgdwasosvoamfycelkimrpaadimnztztmssbqdwmpyylwmwmvddlgwcttbwmmynewdpttsvlylltsbluwmahldihgsrerlurckhyrnwnsshydtkivltyrngafgurfnrkjlmwtinyuomdqdpewseevdfwckkgrpretktthdlyglihvtnspfehlrimchfggwmtueplmkmhiaoymtvtvydiwzvlmyvdlawtkggdaoihfggsdpmtbkhehfdpptlegdihtpoteojppfjnskbtrhampfledyksiawdcxtndelbetdygulkfpambecakorhtemoaxiecpateehycxpfinnbtstamniacngmaymwdalgdmtsuosarydivesflykgcabksfuesbykhdhyqdlfcstdhfhnrpvdprfptpcmdwhpmncahholcfsbsptbadpdmtechkwkbgfngedejkinioykfmneisvohnayndtnstmhfpoelnsrbyglhpihmuwzsffxlpvapmiadmoyfepdrkylpeadeyhnzomsuyfsfttscfkbbgpfqdtohpweisolcstekiswolhtbaoyoxsstbidwyiycmfevaaowkfhotkoctldjsmysororkrhglsojspsneoejelainttwpbwtnntwnylyndigwkefywlghaoaeaesslppdjn",
+   "parsed": {
+    "requestIdHex": "9b1deb4d3b7d4bad9bdd2b0d7b3dcb6d",
+    "txId": "7b6e135f6d8d965d1ca192c8093b0f1a42cfc1ad634df971b0b5e17c419b1b13",
+    "rawTxHex": "01000000014a146aa67c34ca9e8cd4b7710cc81d5dbab538f71f0be503744309d1b7522f14000000006b483045022100c992e44ca32290183e040f2519c40f915f112a40c8b25dc97bf43df60b6b51fe02206dfe97cb6e6ca230b8ea1bd9be8521d8a34f4b131e87bae828ef6077c8d28ade412102bbe7dbcdf8b2261530a867df7180b17a90b482f74f2736b8a30d3f756e42e217fdffffff0280380100000000001976a914086a977c7dad32a56996af2ce90a727238d4899888ac28940200000000001976a914cfdcdfa3e0483ddd3c7b6ab6ee13c5087c26d5f188ac00000000"
+   },
+   "verify": {
+    "inputs": [
+     {
+      "txid": "142f52b7d109437403e50b1ff738b5ba5d1dc80c71b7d48c9eca347ca66a144a",
+      "index": 0,
+      "value": 250000,
+      "publicKeyHex": "02bbe7dbcdf8b2261530a867df7180b17a90b482f74f2736b8a30d3f756e42e217"
+     }
+    ],
+    "outputs": [
+     {
+      "address": "qqyx49mu0kkn9ftfj6hje6g2wfer34yfnq5tahq3q6",
+      "value": 80000
+     },
+     {
+      "address": "qr8aeharupyrmhfu0d4tdmsnc5y8cfk47y6qrsjsrx",
+      "value": 169000
+     }
+    ]
+   },
+   "expect": "verify:false"
+  },
+  {
+   "name": "substitutedPayload",
+   "requestName": "signRequest",
+   "ur": "ur:keystone-sign-result/oyadhkadimctluayaeaeaeaeaeaoaxonmefrmnbzdybnfelpmkvofplswksgptdeisnevehejzltlepmsskouocxehvotepfdrkofzsksaspwtnlbtlkondegtjpwysnsovwskyksnstzczcwmrlltgwzowevddlytgdzozevdutvwtlyklfsseytyztzcmyrktswsiyhnwemhrdjshdutdkhfutiyghutdenbdwroeyqzplcteylkmesakecnlsecemjzktrewlteielaihndoysaswsptasbmdltiagdtyidwlgsswkkzmwmdacxztcamwlpoejeptdagrplrhfsgrvoaecxtepafgskleseuelnbtpaatpflddysfsapffptydezmetnbcltojowzldbafraordlenbnlgwrhgalnetuohndmwzecdwvabbgrcatokotddimhjtmylggehkiadkiewefxadprmwesmoiyrohngryabkgufhjeisyntpiaylkoldfmosmnpsguplrehsgylfjztskeuowneeoylojnbzhkwefpoxetcsmnbgpywfcxltfzhpbwgljsimmudsiafsclbnskjnfxrltidsqzplzeeofzbawpgwuecktlgtteecgyprwmvtchjletampkletefwhgvsfmurmuaxuomoqzfgotzogewzdtfztkiaztrszocwonfzdeqdghaoaeaetysfcacf",
+   "parsed": {
+    "requestIdHex": "9b1deb4d3b7d4bad9bdd2b0d7b3dcb6d",
+    "txId": "cb7312b78e1307f3f0e886798974507cf77160e1bc9fa863581b2bda34fcc319",
+    "rawTxHex": "01000000014a146aa67c34ca9e8cd4b7710cc81d5dbab538f71f0be503744309d1b7522f14000000006b483045022100bb0fdd20f330e89271158709a28a57b9947c65837a149026e8be162cd55c0cde022027c495c29b841f4b8ab768b7656cf5e5efe84bf7c4b7d0bef6f0a2c04e86c2c0412102bbe7dbcdf8b2261530a867df7180b17a90b482f74f2736b8a30d3f756e42e217fdffffff0280380100000000001976a914cfdcdfa3e0483ddd3c7b6ab6ee13c5087c26d5f188ac28940200000000001976a914cfdcdfa3e0483ddd3c7b6ab6ee13c5087c26d5f188ac00000000"
+   },
+   "verify": {
+    "inputs": [
+     {
+      "txid": "142f52b7d109437403e50b1ff738b5ba5d1dc80c71b7d48c9eca347ca66a144a",
+      "index": 0,
+      "value": 250000,
+      "publicKeyHex": "02bbe7dbcdf8b2261530a867df7180b17a90b482f74f2736b8a30d3f756e42e217"
+     }
+    ],
+    "outputs": [
+     {
+      "address": "qqyx49mu0kkn9ftfj6hje6g2wfer34yfnq5tahq3q6",
+      "value": 80000
+     },
+     {
+      "address": "qr8aeharupyrmhfu0d4tdmsnc5y8cfk47y6qrsjsrx",
+      "value": 169000
+     }
+    ],
+    "txId": "cb7312b78e1307f3f0e886798974507cf77160e1bc9fa863581b2bda34fcc319"
+   },
+   "expect": "verify:false"
+  }
+ ]
+}

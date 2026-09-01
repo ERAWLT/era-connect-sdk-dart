@@ -1,0 +1,105 @@
+{
+  "generator": "TypeScript SDK parity generator (cardano)",
+  "origin": "Parity Test",
+  "requestId": "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d",
+  "key": {
+    "sha256Of": "era-connect cardano parity key",
+    "accountPublicKeyHex": "0c41a4bb14c5014faf446bdc743ece63b77045fc9c093e282b61e7dccb3dadef",
+    "accountChainCodeHex": "ac3798b30762158f206fa542152f4b7548eebc8dd582fb8b9a5dcde9429e2b5f"
+  },
+  "accountPath": "m/1852'/1815'/0'",
+  "signDataHex": "84a200818258208a1caa99a6e9a644c7217ea04c49c88a426aca6196c0d3c19cc3f3d9d233edb000021a00029810a0f5f6",
+  "txBodyDigestHex": "0a74a30b0ef61d2bbaa49ab7a81daa0d3d8885afdaba86aa326de954773d0317",
+  "requests": [
+    {
+      "name": "cardano_sign_full",
+      "props": {
+        "utxos": [
+          {
+            "transactionHashHex": "8a1caa99a6e9a644c7217ea04c49c88a426aca6196c0d3c19cc3f3d9d233edb0",
+            "index": 0,
+            "amount": "2000000",
+            "path": "m/1852'/1815'/0'/0/0",
+            "xfp": "deadbeef",
+            "address": "addr1qparityaddress"
+          }
+        ],
+        "certKeys": [
+          {
+            "path": "m/1852'/1815'/0'/2/0",
+            "xfp": "deadbeef",
+            "keyHashHex": "feedcf0df64b7c751338d3941b288ba82757a4f6b0680326ab689e4e"
+          }
+        ]
+      },
+      "urType": "cardano-sign-request",
+      "cborHex": "a501d825509b1deb4d3b7d4bad9bdd2b0d7b3dcb6d02583184a200818258208a1caa99a6e9a644c7217ea04c49c88a426aca6196c0d3c19cc3f3d9d233edb000021a00029810a0f5f60381d90899a50158208a1caa99a6e9a644c7217ea04c49c88a426aca6196c0d3c19cc3f3d9d233edb0020003673230303030303004d90130a2018a19073cf5190717f500f500f400f4021adeadbeef0573616464723171706172697479616464726573730481d9089ca201581cfeedcf0df64b7c751338d3941b288ba82757a4f6b0680326ab689e4e02d90130a2018a19073cf5190717f500f502f400f4021adeadbeef056b5061726974792054657374",
+      "ur": "ur:cardano-sign-request/onadtpdagdndcawmgtfrkigrpmndutdnbtkgfssbjnaohdehlroeaelylfhdcxlecepknlolwlolfystclkbnbgsgasplefwimsghsmtrttesenssrwftatdeowepfaeaocyaeaomkbenbykynaxlytaaynlonadhdcxlecepknlolwlolfystclkbnbgsgasplefwimsghsmtrttesenssrwftatdeowepfaoaeaxioeydydydydydydyaataaddyoeadlecfatfnykcfatchykaeykaewkaewkaocyuepmrnwsahjkhsieiejpehjsjohsjpinjykkhsieiejpihjkjkaalytaaynsoeadhdcezewetkbtyngrkekpbwettemwcwdelupddihgoxynpfisaxdspyisnnglaotaaddyoeadlecfatfnykcfatchykaeykaowkaewkaocyuepmrnwsahjegdhsjpinjykkcxghihjkjymnmumusr"
+    },
+    {
+      "name": "cardano_sign_minimal",
+      "props": {
+        "utxos": [
+          {
+            "transactionHashHex": "8a1caa99a6e9a644c7217ea04c49c88a426aca6196c0d3c19cc3f3d9d233edb0",
+            "index": 1,
+            "path": "m/1852'/1815'/0'/0/0",
+            "xfp": "cafebabe"
+          }
+        ]
+      },
+      "urType": "cardano-sign-request",
+      "cborHex": "a401d825509b1deb4d3b7d4bad9bdd2b0d7b3dcb6d02583184a200818258208a1caa99a6e9a644c7217ea04c49c88a426aca6196c0d3c19cc3f3d9d233edb000021a00029810a0f5f60381d90899a30158208a1caa99a6e9a644c7217ea04c49c88a426aca6196c0d3c19cc3f3d9d233edb0020104d90130a2018a19073cf5190717f500f500f400f4021acafebabe056b5061726974792054657374",
+      "ur": "ur:cardano-sign-request/oxadtpdagdndcawmgtfrkigrpmndutdnbtkgfssbjnaohdehlroeaelylfhdcxlecepknlolwlolfystclkbnbgsgasplefwimsghsmtrttesenssrwftatdeowepfaeaocyaeaomkbenbykynaxlytaaynlotadhdcxlecepknlolwlolfystclkbnbgsgasplefwimsghsmtrttesenssrwftatdeowepfaoadaataaddyoeadlecfatfnykcfatchykaeykaewkaewkaocysgzerdrnahjegdhsjpinjykkcxghihjkjymdheisny"
+    }
+  ],
+  "replies": [
+    {
+      "name": "witness_set_both_paths",
+      "ur": "ur:cardano-signature/oeadtpdagdndcawmgtfrkigrpmndutdnbtkgfssbjnaohdtioyaetaadaolflfhdcxvytevtftgdztktrljyplwfiavassvoaswpaedsrdjzpagadecntnkbmkwppfurkphdfzgyhsclgmhtfrfwcmueeeteadsnaeqzgdsorspyoncnlafgcloxftskglmwcfbygmfdmyswfwfetkhlmhcsdsioamhemtrscylnkpdrndoeehdrtdjzzocyosdlmsehaxlfhdcxghgywmgttduegtjkgmrdmsueytnynybdpkpesblbkphfyldpbnlanbammhemlnmkhdfzgsfpingaptbgjsweeolpetcarkkocwsplkbazskbrfwmvtutmsoemhcpbdmypkdiaofnjkqzrtmtfxdadpololpfylwtosrffwhfkeempmssseynlsfldachsssshhaynsrsglvt",
+      "parsed": {
+        "requestIdHex": "9b1deb4d3b7d4bad9bdd2b0d7b3dcb6d",
+        "witnessSetHex": "a100d9010282825820e1d3e03a50fc77b774aef363e6c4e209ec0026ba6cb1492823da7e98ecb0df755840516121525a3b4216de34d301cd00b450c9bfaba523804621a43ac54e94191152488fc64245cf5d90182667065f96bf1a86752a9ba2312ad26cfb1aa72f9731038258205451eb4dd2de4d7352ba97def99a9a0baaafcb7f7556f72d0c80a0069037869858404c416949a91271ed3385381dbb761bc88c0efa7ebcebe0dd97a290220b8faa27023c73b4c09643252da6a6b0f7f0a7bc42567c37adc4c1f683472517c4c45c08",
+        "witnesses": [
+          {
+            "vkeyHex": "e1d3e03a50fc77b774aef363e6c4e209ec0026ba6cb1492823da7e98ecb0df75",
+            "signatureHex": "516121525a3b4216de34d301cd00b450c9bfaba523804621a43ac54e94191152488fc64245cf5d90182667065f96bf1a86752a9ba2312ad26cfb1aa72f973103"
+          },
+          {
+            "vkeyHex": "5451eb4dd2de4d7352ba97def99a9a0baaafcb7f7556f72d0c80a00690378698",
+            "signatureHex": "4c416949a91271ed3385381dbb761bc88c0efa7ebcebe0dd97a290220b8faa27023c73b4c09643252da6a6b0f7f0a7bc42567c37adc4c1f683472517c4c45c08"
+          }
+        ]
+      },
+      "verify": {
+        "signerPaths": [
+          "m/1852'/1815'/0'/0/0",
+          "m/1852'/1815'/0'/2/0"
+        ]
+      },
+      "verdict": "verify:true"
+    }
+  ],
+  "tampered": [
+    {
+      "name": "wrong_request_id_echo",
+      "ur": "ur:cardano-signature/oeadtpdagdnlnlnlnlnlnlnlnlnlnlnlnlnlnlnlnlaohdtioyaetaadaolflfhdcxvytevtftgdztktrljyplwfiavassvoaswpaedsrdjzpagadecntnkbmkwppfurkphdfzgyhsclgmhtfrfwcmueeeteadsnaeqzgdsorspyoncnlafgcloxftskglmwcfbygmfdmyswfwfetkhlmhcsdsioamhemtrscylnkpdrndoeehdrtdjzzocyosdlmsehaxlfhdcxghgywmgttduegtjkgmrdmsueytnynybdpkpesblbkphfyldpbnlanbammhemlnmkhdfzgsfpingaptbgjsweeolpetcarkkocwsplkbazskbrfwmvtutmsoemhcpbdmypkdiaofnjkqzrtmtfxdadpololpfylwtosrffwhfkeempmssseynlsfldachsssshhaylrpmospm",
+      "expect": "throws:request-id-mismatch"
+    },
+    {
+      "name": "corrupted_signature",
+      "ur": "ur:cardano-signature/oeadtpdagdndcawmgtfrkigrpmndutdnbtkgfssbjnaohdtioyaetaadaolflfhdcxvytevtftgdztktrljyplwfiavassvoaswpaedsrdjzpagadecntnkbmkwppfurkphdfzgdhsclgmhtfrfwcmueeeteadsnaeqzgdsorspyoncnlafgcloxftskglmwcfbygmfdmyswfwfetkhlmhcsdsioamhemtrscylnkpdrndoeehdrtdjzzocyosdlmsehaxlfhdcxghgywmgttduegtjkgmrdmsueytnynybdpkpesblbkphfyldpbnlanbammhemlnmkhdfzgsfpingaptbgjsweeolpetcarkkocwsplkbazskbrfwmvtutmsoemhcpbdmypkdiaofnjkqzrtmtfxdadpololpfylwtosrffwhfkeempmssseynlsfldachsssshhaylgostiuo",
+      "parsed": {
+        "requestIdHex": "9b1deb4d3b7d4bad9bdd2b0d7b3dcb6d",
+        "witnessSetHex": "a100d9010282825820e1d3e03a50fc77b774aef363e6c4e209ec0026ba6cb1492823da7e98ecb0df755840506121525a3b4216de34d301cd00b450c9bfaba523804621a43ac54e94191152488fc64245cf5d90182667065f96bf1a86752a9ba2312ad26cfb1aa72f9731038258205451eb4dd2de4d7352ba97def99a9a0baaafcb7f7556f72d0c80a0069037869858404c416949a91271ed3385381dbb761bc88c0efa7ebcebe0dd97a290220b8faa27023c73b4c09643252da6a6b0f7f0a7bc42567c37adc4c1f683472517c4c45c08"
+      },
+      "verify": {
+        "signerPaths": [
+          "m/1852'/1815'/0'/0/0",
+          "m/1852'/1815'/0'/2/0"
+        ]
+      },
+      "expect": "verify:false"
+    }
+  ]
+}

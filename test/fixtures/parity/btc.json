@@ -1,0 +1,161 @@
+{
+ "generator": "TypeScript SDK parity fixture (btc)",
+ "seedHex": "5eb00bbddcf069084889a8ab9155568165f5c453ccb85e70811aaed6f6da5fc19a5ac40b389cd370d086206dec8aa6c43daea6690f20ad3d8d48b2d2ce9e38e4",
+ "origin": "Parity Harness",
+ "requestId": "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d",
+ "path": "m/44'/0'/0'/0/0",
+ "xfp": "73c5da0a",
+ "address": "1LqBGSKuX5yYUonjxT5qGfpUsXKYYWeabA",
+ "publicKeyHex": "03aaeb52dd7494c361049de67cc680e83ebcbbbdbeb13637d92cd845f70308af5e",
+ "requests": [
+  {
+   "name": "psbt_btc",
+   "props": {
+    "psbtHex": "70736274ff0100520200000001aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa0000000000ffffffff0140420f0000000000160014111111111111111111111111111111111111111100000000000000",
+    "coin": "btc"
+   },
+   "urType": "crypto-psbt",
+   "cborHex": "585d70736274ff0100520200000001aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa0000000000ffffffff0140420f0000000000160014111111111111111111111111111111111111111100000000000000"
+  },
+  {
+   "name": "psbt_ltc",
+   "props": {
+    "psbtHex": "70736274ff0100520200000001aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa0000000000ffffffff0140420f0000000000160014111111111111111111111111111111111111111100000000000000",
+    "coin": "ltc"
+   },
+   "urType": "crypto-psbt-extend",
+   "cborHex": "a201585d70736274ff0100520200000001aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa0000000000ffffffff0140420f00000000001600141111111111111111111111111111111111111111000000000000000202"
+  },
+  {
+   "name": "psbt_doge",
+   "props": {
+    "psbtHex": "70736274ff0100520200000001aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa0000000000ffffffff0140420f0000000000160014111111111111111111111111111111111111111100000000000000",
+    "coin": "doge"
+   },
+   "urType": "crypto-psbt-extend",
+   "cborHex": "a201585d70736274ff0100520200000001aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa0000000000ffffffff0140420f00000000001600141111111111111111111111111111111111111111000000000000000203"
+  },
+  {
+   "name": "psbt_dash",
+   "props": {
+    "psbtHex": "70736274ff0100520200000001aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa0000000000ffffffff0140420f0000000000160014111111111111111111111111111111111111111100000000000000",
+    "coin": "dash"
+   },
+   "urType": "crypto-psbt-extend",
+   "cborHex": "a201585d70736274ff0100520200000001aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa0000000000ffffffff0140420f00000000001600141111111111111111111111111111111111111111000000000000000205"
+  },
+  {
+   "name": "message",
+   "props": {
+    "requestId": "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d",
+    "messageHex": "455241207061726974793a207369676e2074686973206d657373616765",
+    "path": "m/44'/0'/0'/0/0",
+    "xfp": "73c5da0a",
+    "address": "1LqBGSKuX5yYUonjxT5qGfpUsXKYYWeabA"
+   },
+   "urType": "btc-sign-request",
+   "cborHex": "a601d825509b1deb4d3b7d4bad9bdd2b0d7b3dcb6d02581d455241207061726974793a207369676e2074686973206d65737361676503010481d90130a2018a182cf500f500f500f400f4021a73c5da0a05817822314c714247534b7558357959556f6e6a785435714766705573584b59595765616241066e506172697479204861726e657373"
+  }
+ ],
+ "replies": [
+  {
+   "name": "psbt_plain",
+   "for": "psbt_btc",
+   "ur": "ur:crypto-psbt/hdspjojkidjyzmadaegmaoaeaeaeadpkpkpkpkpkpkpkpkpkpkpkpkpkpkpkpkpkpkpkpkpkpkpkpkpkpkpkpkpkpkpkpkaeaeaeaeaezmzmzmzmadfzfwbsaeaeaeaeaecmaebbbybybybybybybybybybybybybybybybybybybybyaeaeaeaeaecpaoaxpkwmgmutjymwsrhsaantvakeswlavsfmrfrkryrnpaenemtadwtpfeylaxaypehyfldyfyaocxjemnzmvsrthsttldylgdfxcmtdmulaamjpzmaodslkhgidptqzbdhktdylonadvdaocxbbltgyylbbldvssbiygsisryiyjywprfptwyftwmswnypauomtmyynvaotcmgybtadaeaeparklemu",
+   "parsed": {
+    "psbtHex": "70736274ff0100520200000001aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa0000000000ffffffff0140420f000000000016001411111111111111111111111111111111111111110000000000220203aaeb52dd7494c361049de67cc680e83ebcbbbdbeb13637d92cd845f70308af5e47304402206b8effe8c061d189f7504316d293800672ff02268c5762a9b40b59d2f7a501e70220148751f71489e8cb664c68bd6674ecbca9ee3aebc69ab1dc968ff6e6a316510d010000"
+   }
+  },
+  {
+   "name": "psbt_extend",
+   "for": "psbt_doge",
+   "ur": "ur:crypto-psbt-extend/oeadhdspjojkidjyzmadaegmaoaeaeaeadpkpkpkpkpkpkpkpkpkpkpkpkpkpkpkpkpkpkpkpkpkpkpkpkpkpkpkpkpkpkpkpkaeaeaeaeaezmzmzmzmadfzfwbsaeaeaeaeaecmaebbbybybybybybybybybybybybybybybybybybybybyaeaeaeaeaecpaoaxpkwmgmutjymwsrhsaantvakeswlavsfmrfrkryrnpaenemtadwtpfeylaxaypehyfldyfyaocxjemnzmvsrthsttldylgdfxcmtdmulaamjpzmaodslkhgidptqzbdhktdylonadvdaocxbbltgyylbbldvssbiygsisryiyjywprfptwyftwmswnypauomtmyynvaotcmgybtadaeaeaoaxteimrksf",
+   "parsed": {
+    "psbtHex": "70736274ff0100520200000001aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa0000000000ffffffff0140420f000000000016001411111111111111111111111111111111111111110000000000220203aaeb52dd7494c361049de67cc680e83ebcbbbdbeb13637d92cd845f70308af5e47304402206b8effe8c061d189f7504316d293800672ff02268c5762a9b40b59d2f7a501e70220148751f71489e8cb664c68bd6674ecbca9ee3aebc69ab1dc968ff6e6a316510d010000"
+   }
+  },
+  {
+   "name": "message_base64_ascii",
+   "for": "message",
+   "ur": "ur:btc-signature/otadtpdagdndcawmgtfrkigrpmndutdnbtkgfssbjnaohdhdfdeykpgwdldnimfphkieflgeesehfwfyfgjygrghiofphtkkdlktgajnimfgieinjsidgygshgiegseojogyfdjtfggaiegmesksgugeengtjyjnghflineshtjtghjkkogrjtkpgwkpkofljnjpfdiajzjldleyecjsgthggogydyfsaxhdclaxpkwmgmutjymwsrhsaantvakeswlavsfmrfrkryrnpaenemtadwtpfeylaxaypehyttfttppr",
+   "parsed": {
+    "requestIdHex": "9b1deb4d3b7d4bad9bdd2b0d7b3dcb6d",
+    "signatureHex": "1f6b8effe8c061d189f7504316d293800672ff02268c5762a9b40b59d2f7a501e7148751f71489e8cb664c68bd6674ecbca9ee3aebc69ab1dc968ff6e6a316510d",
+    "signatureBase64": "H2uO/+jAYdGJ91BDFtKTgAZy/wImjFdiqbQLWdL3pQHnFIdR9xSJ6MtmTGi9ZnTsvKnuOuvGmrHclo/25qMWUQ0=",
+    "publicKeyHex": "03aaeb52dd7494c361049de67cc680e83ebcbbbdbeb13637d92cd845f70308af5e"
+   }
+  },
+  {
+   "name": "message_raw65",
+   "for": "message",
+   "ur": "ur:btc-signature/otadtpdagdndcawmgtfrkigrpmndutdnbtkgfssbjnaohdfpctjemnzmvsrthsttldylgdfxcmtdmulaamjpzmaodslkhgidptqzbdhktdylonadvdbbltgyylbbldvssbiygsisryiyjywprfptwyftwmswnypauomtmyynvaotcmgybtaxhdclaxpkwmgmutjymwsrhsaantvakeswlavsfmrfrkryrnpaenemtadwtpfeylaxaypehypmsgvlwn",
+   "parsed": {
+    "requestIdHex": "9b1deb4d3b7d4bad9bdd2b0d7b3dcb6d",
+    "signatureHex": "1f6b8effe8c061d189f7504316d293800672ff02268c5762a9b40b59d2f7a501e7148751f71489e8cb664c68bd6674ecbca9ee3aebc69ab1dc968ff6e6a316510d",
+    "signatureBase64": "H2uO/+jAYdGJ91BDFtKTgAZy/wImjFdiqbQLWdL3pQHnFIdR9xSJ6MtmTGi9ZnTsvKnuOuvGmrHclo/25qMWUQ0=",
+    "publicKeyHex": "03aaeb52dd7494c361049de67cc680e83ebcbbbdbeb13637d92cd845f70308af5e"
+   }
+  },
+  {
+   "name": "message_wrong_id_echo",
+   "for": "message",
+   "ur": "ur:btc-signature/otadtpdagdasasasasasasasasasasasasasasasasaohdfpctjemnzmvsrthsttldylgdfxcmtdmulaamjpzmaodslkhgidptqzbdhktdylonadvdbbltgyylbbldvssbiygsisryiyjywprfptwyftwmswnypauomtmyynvaotcmgybtaxhdclaxpkwmgmutjymwsrhsaantvakeswlavsfmrfrkryrnpaenemtadwtpfeylaxaypehycnaentas",
+   "expect": "throws:request-id-mismatch"
+  },
+  {
+   "name": "message_signature_58_bytes",
+   "for": "message",
+   "ur": "ur:btc-signature/otadtpdagdndcawmgtfrkigrpmndutdnbtkgfssbjnaohdftctjemnzmvsrthsttldylgdfxcmtdmulaamjpzmaodslkhgidptqzbdhktdylonadvdbbltgyylbbldvssbiygsisryiyjywprfptwyftwmswnypauomtaxhdclaxpkwmgmutjymwsrhsaantvakeswlavsfmrfrkryrnpaenemtadwtpfeylaxaypehyrprlkoae",
+   "expect": "throws:malformed-reply"
+  },
+  {
+   "name": "message_empty_signature",
+   "for": "message",
+   "ur": "ur:btc-signature/otadtpdagdndcawmgtfrkigrpmndutdnbtkgfssbjnaofzaxhdclaxpkwmgmutjymwsrhsaantvakeswlavsfmrfrkryrnpaenemtadwtpfeylaxaypehyztlfvtkb",
+   "expect": "throws:empty-signature"
+  },
+  {
+   "name": "psbt_not_bytes",
+   "for": "psbt_btc",
+   "ur": "ur:crypto-psbt/oyaoadidsgrfgy",
+   "expect": "throws:malformed-reply"
+  }
+ ],
+ "verify": [
+  {
+   "name": "header_ok",
+   "kind": "message-header",
+   "address": "1LqBGSKuX5yYUonjxT5qGfpUsXKYYWeabA",
+   "signatureHex": "1f6b8effe8c061d189f7504316d293800672ff02268c5762a9b40b59d2f7a501e7148751f71489e8cb664c68bd6674ecbca9ee3aebc69ab1dc968ff6e6a316510d",
+   "expect": "verify:true"
+  },
+  {
+   "name": "header_wrong_range",
+   "kind": "message-header",
+   "address": "1LqBGSKuX5yYUonjxT5qGfpUsXKYYWeabA",
+   "signatureHex": "276b8effe8c061d189f7504316d293800672ff02268c5762a9b40b59d2f7a501e7148751f71489e8cb664c68bd6674ecbca9ee3aebc69ab1dc968ff6e6a316510d",
+   "expect": "verify:false"
+  },
+  {
+   "name": "psbt_ok",
+   "kind": "signed-psbt",
+   "sentPsbtHex": "70736274ff0100520200000001aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa0000000000ffffffff0140420f0000000000160014111111111111111111111111111111111111111100000000000000",
+   "signedPsbtHex": "70736274ff0100520200000001aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa0000000000ffffffff0140420f000000000016001411111111111111111111111111111111111111110000000000220203aaeb52dd7494c361049de67cc680e83ebcbbbdbeb13637d92cd845f70308af5e47304402206b8effe8c061d189f7504316d293800672ff02268c5762a9b40b59d2f7a501e70220148751f71489e8cb664c68bd6674ecbca9ee3aebc69ab1dc968ff6e6a316510d010000",
+   "expect": "verify:true"
+  },
+  {
+   "name": "psbt_substituted_tx",
+   "kind": "signed-psbt",
+   "sentPsbtHex": "70736274ff0100520200000001aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa0000000000ffffffff0140420f0000000000160014111111111111111111111111111111111111111100000000000000",
+   "signedPsbtHex": "70736274ff0100520200000001aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa0000000000ffffffff0140420f000000000016001422222222222222222222222222222222222222220000000000220203aaeb52dd7494c361049de67cc680e83ebcbbbdbeb13637d92cd845f70308af5e47304402206b8effe8c061d189f7504316d293800672ff02268c5762a9b40b59d2f7a501e70220148751f71489e8cb664c68bd6674ecbca9ee3aebc69ab1dc968ff6e6a316510d010000",
+   "expect": "verify:false"
+  },
+  {
+   "name": "psbt_unsigned_reply",
+   "kind": "signed-psbt",
+   "sentPsbtHex": "70736274ff0100520200000001aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa0000000000ffffffff0140420f0000000000160014111111111111111111111111111111111111111100000000000000",
+   "signedPsbtHex": "70736274ff0100520200000001aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa0000000000ffffffff0140420f0000000000160014111111111111111111111111111111111111111100000000000000",
+   "expect": "verify:false"
+  }
+ ]
+}

@@ -1,0 +1,91 @@
+{
+  "note": "Generated from the TypeScript SDK. Synthetic key only: ed25519 seed = sha256(utf8(\"era-connect-ton-parity\")).",
+  "publicKeyHex": "f854293175d704095f8041dab636201191b9c863222785d1ce46a7bcb5df93bd",
+  "requestIdHex": "9b1deb4d3b7d4bad9bdd2b0d7b3dcb6d",
+  "requests": [
+    {
+      "name": "transaction-default-datatype",
+      "props": {
+        "requestId": "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d",
+        "signDataHex": "b5ee9c7201010301000c000204dead0102000211000128",
+        "path": "m/44'/607'/0'",
+        "xfp": "deadbeef",
+        "address": "UQCD39VS5jcptHL8vMjEXrzGaRcCVYto7HUn4bpAOg8xqB2N",
+        "origin": "ERA Parity"
+      },
+      "urType": "ton-sign-request",
+      "cborHex": "a601d825582439623164656234642d336237642d346261642d396264642d3262306437623364636236640257b5ee9c7201010301000c000204dead0102000211000128030104d90130a20186182cf519025ff500f5021adeadbeef0578305551434433395653356a637074484c38764d6a4558727a47615263435659746f3748556e346270414f6738787142324e066a45524120506172697479"
+    },
+    {
+      "name": "ton-proof-default-origin",
+      "props": {
+        "requestIdRawHex": "9b1deb4d3b7d4bad9bdd2b0d7b3dcb6d",
+        "signDataHex": "746f6e2d70726f6f662d6974656d2d76322f7061726974792e6578616d706c653a3434333a64656d6f",
+        "dataType": 2,
+        "path": "m/44'/607'/1'",
+        "xfp": 3735928559
+      },
+      "urType": "ton-sign-request",
+      "cborHex": "a501d825582439623164656234642d336237642d346261642d396264642d326230643762336463623664025829746f6e2d70726f6f662d6974656d2d76322f7061726974792e6578616d706c653a3434333a64656d6f030204d90130a20186182cf519025ff501f5021adeadbeef066b45524120436f6e6e656374"
+    }
+  ],
+  "replies": [
+    {
+      "name": "string-echo-transaction",
+      "ur": "ur:ton-signature/otadtpdahddkesidehieihideeiedpeoidemiedpeeidhsiedpesidieiedpeyiddyieemideoieiaidenieaohdfzlsjehhltrlhksrdifsdtbesffmsbbzjpdnhncahglfgtgtswtbbbdpiokprkjthnhsfhwtnsketyeocpisuymwuorysblpjoosweolwzdydewdbwtibtahfxdteslkbaaximfegmfpcxhghsjzjzihjyctsgldgl",
+      "expectedRequestId": "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d",
+      "parsed": {
+        "requestIdHex": "9b1deb4d3b7d4bad9bdd2b0d7b3dcb6d",
+        "signatureHex": "836b5c87b759c3273d2910cc3ecb15722b601d57824d4dc6d6142d6775bb6e60613ff09c7cd4332268db94dcbdcb8570a7eda6f23028ea13d00d054329398c0e"
+      },
+      "verify": {
+        "signDataHex": "b5ee9c7201010301000c000204dead0102000211000128",
+        "dataType": 1,
+        "verdict": "verify:true"
+      }
+    },
+    {
+      "name": "binary-echo-ton-proof",
+      "ur": "ur:ton-signature/otadtpdagdndcawmgtfrkigrpmndutdnbtkgfssbjnaohdfzhdcfmkflzmprytdydprnwytoftqzpakgfglottidytolhykggsmueetnoymukbeontlgknvlspldhltlflfzjsatnevtwtvabwcljtlkdekghpjlhhnnyktkuetabgbaaximfegmfpcxhghsjzjzihjylaktmdck",
+      "expectedRequestId": "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d",
+      "parsed": {
+        "requestIdHex": "9b1deb4d3b7d4bad9bdd2b0d7b3dcb6d",
+        "signatureHex": "58199847ffb2f9302dbeeece3ab4b17b4688d162f9a65e7b4c9334daa1937e339d8d7ae3c8895dd5474071079fe0f0e613216e8c287b5b6f5c9ef5cfded9120e"
+      },
+      "verify": {
+        "signDataHex": "746f6e2d70726f6f662d6974656d2d76322f7061726974792e6578616d706c653a3434333a64656d6f",
+        "dataType": 2,
+        "verdict": "verify:true"
+      }
+    },
+    {
+      "name": "stale-echo",
+      "ur": "ur:ton-signature/otadtpdahddkdydydydydydydydydpeoidemiedpeeidhsiedpesidieiedpeyiddyieemideoieiaidenieaohdfzlsjehhltrlhksrdifsdtbesffmsbbzjpdnhncahglfgtgtswtbbbdpiokprkjthnhsfhwtnsketyeocpisuymwuorysblpjoosweolwzdydewdbwtibtahfxdteslkbaaximfegmfpcxhghsjzjzihjyfdrolrya",
+      "expectedRequestId": "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d",
+      "expect": "throws:request-id-mismatch"
+    },
+    {
+      "name": "corrupted-signature",
+      "ur": "ur:ton-signature/otadtpdahddkesidehieihideeiedpeoidemiedpeeidhsiedpesidieiedpeyiddyieemideoieiaidenieaohdfzlsjehhltrlhksrdifsdtbesffmsbbzjpdnhncahglfgtgtswtbbbdpiokprkjthnhsfhwtnsketyeocpisuymwuorysblpjoosweolwzdydewdbwtibtahfxdteslkbsaximfegmfpcxhghsjzjzihjysahhgdsb",
+      "expectedRequestId": "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d",
+      "parsed": {
+        "requestIdHex": "9b1deb4d3b7d4bad9bdd2b0d7b3dcb6d",
+        "signatureHex": "836b5c87b759c3273d2910cc3ecb15722b601d57824d4dc6d6142d6775bb6e60613ff09c7cd4332268db94dcbdcb8570a7eda6f23028ea13d00d054329398c0f"
+      },
+      "verify": {
+        "signDataHex": "b5ee9c7201010301000c000204dead0102000211000128",
+        "dataType": 1,
+        "verdict": "verify:false"
+      }
+    }
+  ],
+  "verifyOnly": [
+    {
+      "name": "proof-substituted-payload",
+      "signDataHex": "746f6e2d70726f6f662d6974656d2d76322f6f74686572",
+      "dataType": 2,
+      "signatureHex": "58199847ffb2f9302dbeeece3ab4b17b4688d162f9a65e7b4c9334daa1937e339d8d7ae3c8895dd5474071079fe0f0e613216e8c287b5b6f5c9ef5cfded9120e",
+      "verdict": "verify:false"
+    }
+  ]
+}
