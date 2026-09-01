@@ -17,18 +17,46 @@ class Secp256k1 {
 
   static BigInt get order => _domain.n;
 
-  /// Parse a compressed (33-byte) or uncompressed (65-byte) public key.
-  /// Throws [ArgumentError] on anything that is not a curve point.
+  /// Parse a compressed (33-byte, `02`/`03`) or uncompressed (65-byte, `04`)
+  /// public key. Throws [ArgumentError] on anything that is not a curve
+  /// point — including the hybrid `06`/`07` prefixes and off-curve
+  /// coordinates, both of which the underlying decoder would happily wrap
+  /// (the reference SDK's curve library refuses them, so this SDK must too).
   static ECPoint parsePublicKey(Uint8List bytes) {
-    if (bytes.length != 33 && bytes.length != 65) {
+    if (bytes.length == 33) {
+      if (bytes[0] != 0x02 && bytes[0] != 0x03) {
+        throw ArgumentError('compressed public key must start with 02 or 03');
+      }
+    } else if (bytes.length == 65) {
+      if (bytes[0] != 0x04) {
+        throw ArgumentError('uncompressed public key must start with 04');
+      }
+    } else {
       throw ArgumentError('public key must be 33 or 65 bytes');
     }
     final point = _domain.curve.decodePoint(bytes);
     if (point == null || point.isInfinity) {
       throw ArgumentError('invalid public key encoding');
     }
+    if (bytes.length == 65 && !_isOnCurve(point)) {
+      throw ArgumentError('public key is not on the curve');
+    }
     return point;
   }
+
+  /// y^2 == x^3 + 7 (mod p). The decoder derives y itself for compressed
+  /// input, but wraps caller-supplied coordinates unchecked for uncompressed.
+  static bool _isOnCurve(ECPoint point) {
+    final p = _fieldPrime;
+    final x = point.x!.toBigInteger()!;
+    final y = point.y!.toBigInteger()!;
+    return (y * y - x * x * x - BigInt.from(7)) % p == BigInt.zero;
+  }
+
+  static final BigInt _fieldPrime = BigInt.parse(
+    'fffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2f',
+    radix: 16,
+  );
 
   /// Verify a compact `r || s` signature over a 32-byte digest.
   ///
@@ -81,11 +109,7 @@ class Secp256k1 {
 
     // x = r (+ n for the rare recId>=2 case where r wrapped past the order).
     final x = recoveryId >= 2 ? r + n : r;
-    final prime = BigInt.parse(
-      'fffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2f',
-      radix: 16,
-    );
-    if (x >= prime) {
+    if (x >= _fieldPrime) {
       throw ArgumentError('recovery x out of field');
     }
     final rPoint = _decompress(x, recoveryId & 1);

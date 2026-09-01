@@ -49,6 +49,32 @@ void main() {
       }
     });
 
+    test('refuses hybrid prefixes and off-curve uncompressed keys', () {
+      final v =
+          (kat['secp256k1'] as List<dynamic>).first as Map<String, dynamic>;
+      final sig = hexToBytes('${v['r'] as String}${v['s'] as String}');
+      final digest = hexToBytes(v['digest'] as String);
+      // Rebuild the same point as uncompressed, then damage the encoding.
+      final point = Secp256k1.parsePublicKey(hexToBytes(v['pub33'] as String));
+      final uncompressed = Uint8List.fromList(point.getEncoded(false));
+      expect(Secp256k1.verify(sig, digest, uncompressed), isTrue);
+
+      // Hybrid prefixes 0x06/0x07 wrap the same coordinates; the reference
+      // curve library refuses them, so verify must return false, not true.
+      for (final prefix in [0x06, 0x07]) {
+        final hybrid = Uint8List.fromList(uncompressed);
+        hybrid[0] = prefix;
+        expect(Secp256k1.verify(sig, digest, hybrid), isFalse);
+        expect(() => Secp256k1.parsePublicKey(hybrid), throwsArgumentError);
+      }
+
+      // Off-curve: y+1 satisfies no curve equation.
+      final offCurve = Uint8List.fromList(uncompressed);
+      offCurve[64] = (offCurve[64] + 1) & 0xff;
+      expect(() => Secp256k1.parsePublicKey(offCurve), throwsArgumentError);
+      expect(Secp256k1.verify(sig, digest, offCurve), isFalse);
+    });
+
     test('refuses the malleated high-S form', () {
       final v = kat['secp256k1HighS'] as Map<String, dynamic>;
       final sig = hexToBytes('${v['r'] as String}${v['s'] as String}');

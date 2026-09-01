@@ -63,7 +63,7 @@ void main() {
   });
 
   test('the key-derivation hardware call builds through the facade', () {
-    final call = era.keyDerivationCall(KeyDerivationCallProps(
+    final call = era.generateKeyDerivationCall(KeyDerivationCallProps(
       schemas: [
         KeyDerivationSchema(path: "m/44'/60'/0'"),
       ],

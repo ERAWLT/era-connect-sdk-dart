@@ -7,10 +7,15 @@ library;
 
 export 'src/verify/bch.dart';
 export 'src/verify/btc.dart';
-export 'src/verify/cardano.dart';
+export 'src/verify/cardano.dart'
+    show
+        VerifyCardanoAccount,
+        VerifyCardanoSignatureArgs,
+        verifyCardanoSignature;
 export 'src/verify/cosmos.dart';
 export 'src/verify/evm.dart';
-export 'src/verify/psbt_reader.dart';
+export 'src/verify/psbt_reader.dart'
+    show ParsedPsbt, PsbtInputType, PsbtKeyValue, parsePsbt;
 export 'src/verify/result.dart';
 export 'src/verify/solana.dart';
 export 'src/verify/sui.dart';

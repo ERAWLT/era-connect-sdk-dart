@@ -59,6 +59,21 @@ Uint8List signDerLowS(Uint8List digest32, Uint8List priv) {
 }
 
 void main() {
+  test('deeply nested inner objects are refused, not a stack overflow', () {
+    // 200k opening inner-object markers followed by their closers would
+    // overflow the call stack without the depth cap; the verifier must
+    // return a failed verdict instead of crashing.
+    final hostile = Uint8List.fromList([
+      ...List.filled(200000, 0xe2),
+      ...List.filled(200000, 0xe1),
+    ]);
+    final verdict = verifyXrpSignature(VerifyXrpSignatureArgs(
+      signedTx: hostile,
+      expectedSigningPubKey: '02' + '00' * 32,
+    ));
+    expect(verdict.ok, isFalse);
+  });
+
   final era = XrpChain(const EraConnectConfig(origin: 'Rest Test'));
 
   group('XRP', () {

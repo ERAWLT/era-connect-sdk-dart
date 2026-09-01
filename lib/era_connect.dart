@@ -20,7 +20,9 @@ import 'src/chains/sui.dart';
 import 'src/chains/ton.dart';
 import 'src/chains/tron.dart';
 import 'src/chains/xrp.dart';
-import 'src/hardware_call/key_derivation.dart';
+import 'src/hardware_call/key_derivation.dart' as kd;
+import 'src/hardware_call/key_derivation.dart'
+    show HardwareCallRequest, KeyDerivationCallProps;
 import 'src/raw.dart';
 import 'src/scan/ur_scanner.dart';
 
@@ -40,7 +42,13 @@ export 'src/chains/btc.dart';
 export 'src/chains/cardano.dart';
 export 'src/chains/cosmos.dart';
 export 'src/chains/evm.dart';
-export 'src/chains/shared.dart';
+export 'src/chains/shared.dart'
+    show
+        ChainContext,
+        EraConnectConfig,
+        ExpectedReply,
+        SignRequest,
+        resolveContext;
 export 'src/chains/solana.dart';
 export 'src/chains/sui.dart';
 export 'src/chains/ton.dart';
@@ -48,7 +56,8 @@ export 'src/chains/tron.dart';
 export 'src/chains/xrp.dart';
 export 'src/core/errors.dart';
 export 'src/core/rand.dart' show RandomBytesFn;
-export 'src/hardware_call/key_derivation.dart';
+export 'src/hardware_call/key_derivation.dart'
+    show HardwareCallRequest, KeyDerivationCallProps, KeyDerivationSchema;
 export 'src/qr/animated_ur.dart';
 export 'src/raw.dart';
 export 'src/registry/keypath.dart' show PathLevel, formatPath, parsePath;
@@ -113,8 +122,8 @@ class EraConnect {
   /// Pull-model linking: ask the device for SPECIFIC derivations
   /// (`qr-hardware-call` 1201). The device answers with a
   /// `crypto-multi-accounts` export.
-  HardwareCallRequest keyDerivationCall(KeyDerivationCallProps props) =>
-      generateKeyDerivationCall(_context, props);
+  HardwareCallRequest generateKeyDerivationCall(KeyDerivationCallProps props) =>
+      kd.generateKeyDerivationCall(_context, props);
 
   /// A type-agnostic hardened scanner (linking flows, raw flows).
   UrScanner scanner([UrScannerOptions? options]) => UrScanner(options);

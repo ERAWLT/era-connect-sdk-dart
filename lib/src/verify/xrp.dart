@@ -127,8 +127,15 @@ class _ParsedField {
   final int end;
 }
 
+/// Nesting ceiling for inner objects/arrays. Real XRPL transactions nest a
+/// handful of levels; a hostile reply nesting thousands would otherwise
+/// overflow the call stack, and a StackOverflowError is not catchable the
+/// way the reference SDK's engine RangeError is — refuse instead.
+const int _maxFieldDepth = 32;
+
 /// Parse ONE field at `pos`; returns the field and the offset past it.
-_ParsedField _parseField(Uint8List bytes, int pos) {
+_ParsedField _parseField(Uint8List bytes, int pos, [int depth = 0]) {
+  if (depth > _maxFieldDepth) throw const _WalkError('nesting too deep');
   final start = pos;
   if (pos >= bytes.length) throw const _WalkError('truncated');
   final first = bytes[pos++];
@@ -168,14 +175,14 @@ _ParsedField _parseField(Uint8List bytes, int pos) {
         if (pos >= bytes.length) {
           throw const _WalkError('unterminated inner object');
         }
-        pos = _parseField(bytes, pos).end;
+        pos = _parseField(bytes, pos, depth + 1).end;
       }
       pos += 1;
     case 15:
       // STArray: a sequence of inner-object fields until 0xF1.
       while (pos >= bytes.length || bytes[pos] != 0xf1) {
         if (pos >= bytes.length) throw const _WalkError('unterminated array');
-        pos = _parseField(bytes, pos).end;
+        pos = _parseField(bytes, pos, depth + 1).end;
       }
       pos += 1;
     default:
