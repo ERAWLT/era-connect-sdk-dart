@@ -62,6 +62,7 @@ void main() {
         expectedPublicKey: pub,
       ));
       expect(verdict.ok, isTrue);
+      expect(verdict.checked, isTrue);
     });
 
     test(
@@ -98,6 +99,7 @@ void main() {
         publicKey: pub,
       ));
       expect(verdict.ok, isTrue);
+      expect(verdict.checked, isTrue);
     });
   });
 }

@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 
-import 'package:archive/archive.dart' show GZipEncoder, Inflate;
+import 'package:archive/archive.dart'
+    show GZipEncoder, Inflate, InputMemoryStream;
 
 import '../core/errors.dart';
 import '../ur/crc32.dart';
@@ -121,8 +122,21 @@ Uint8List gunzipCapped(Uint8List data, int maxOutputBytes) {
   // them (and any other trailing garbage).
   Uint8List out;
   try {
-    out = Uint8List.fromList(Inflate(data.sublist(offset, bodyEnd)).getBytes());
+    final body = data.sublist(offset, bodyEnd);
+    final input = InputMemoryStream(body);
+    out = Uint8List.fromList(Inflate.stream(input).getBytes());
+    // DEFLATE is self-terminating, so the inflater stops at the final block
+    // and would silently ignore bytes wedged between the stream and the
+    // trailer. The reference SDK's streaming decoder refuses them (they are
+    // neither a trailer nor a next member) — refuse them here too.
+    if (input.position != body.length) {
+      throw EraSdkError(
+        'gzip-error',
+        'compressed payload is malformed: trailing bytes after the DEFLATE stream',
+      );
+    }
   } catch (e) {
+    if (e is EraSdkError) rethrow;
     throw EraSdkError('gzip-error', 'compressed payload is malformed: $e');
   }
 

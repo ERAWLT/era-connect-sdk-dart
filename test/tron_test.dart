@@ -13,7 +13,6 @@ import 'package:era_connect/src/core/errors.dart';
 import 'package:era_connect/src/crypto/digests.dart';
 import 'package:era_connect/src/crypto/secp256k1.dart';
 import 'package:era_connect/src/tron_proto/gzip.dart';
-import 'package:era_connect/src/tron_proto/messages.dart' show SignedTronTx;
 import 'package:era_connect/src/tron_proto/wire.dart';
 import 'package:era_connect/src/ur/ur.dart';
 import 'package:era_connect/src/verify/result.dart';

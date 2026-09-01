@@ -41,6 +41,9 @@ Uint8List randomRequestId([RandomBytesFn? randomBytes]) {
 
 /// Render 16 bytes as a lowercase hyphenated UUID string (8-4-4-4-12).
 String uuidStringify(Uint8List bytes) {
+  if (bytes.length != 16) {
+    throw EraSdkError('invalid-props', 'request id must be 16 bytes');
+  }
   final hex = bytesToHex(bytes);
   return '${hex.substring(0, 8)}-${hex.substring(8, 12)}-'
       '${hex.substring(12, 16)}-${hex.substring(16, 20)}-${hex.substring(20)}';

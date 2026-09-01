@@ -10,7 +10,8 @@ import '../tron_proto/messages.dart';
 import '../ur/ur.dart';
 import 'shared.dart';
 
-export '../tron_proto/messages.dart' show TronLatestBlock;
+export '../tron_proto/messages.dart'
+    show SignedTronTx, TronLatestBlock, splitSignedTronTx;
 
 /// On-device display metadata for a Tron sign request.
 class TronSignDisplay {

@@ -47,7 +47,7 @@ evm.deriveAddress(0); // 0x… — derived locally, no device round-trip
 final request = era.evm.generateSignRequest(EvmSignRequestProps(
   signData: rawRlpBytes,
   dataType: EvmDataType.transaction,
-  path: evm.receivePath(0),
+  path: evm.pathFor(0),
   xfp: evm.xfp,
   chainId: 1,
 ));

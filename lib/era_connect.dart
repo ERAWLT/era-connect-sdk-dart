@@ -55,6 +55,8 @@ export 'src/registry/keypath.dart' show PathLevel, formatPath, parsePath;
 export 'src/registry/multi_accounts.dart'
     show RawAccountEntry, RawMultiAccounts;
 export 'src/scan/ur_scanner.dart';
+export 'src/device_profile.dart';
+export 'src/ur/limits.dart' show UrLimits;
 export 'src/ur/ur.dart' show Ur;
 
 /// The SDK facade: one instance per app, chain modules as lazy getters.
