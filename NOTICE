@@ -1,0 +1,7 @@
+ERA Connect SDK for Dart
+Copyright 2026 HWLT
+
+This product includes a hand-written encoder/decoder for the protobuf wire
+format used by the Tron network's transaction envelope, whose message layout
+derives from the Tron protocol definitions (https://github.com/tronprotocol/protocol),
+licensed under the Apache License 2.0.
