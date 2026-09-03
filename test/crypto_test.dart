@@ -11,7 +11,7 @@ import 'package:era_connect/src/crypto/secp256k1.dart';
 import 'package:test/test.dart';
 
 /// Cross-implementation known-answer tests: the fixture was produced by the
-/// TypeScript SDK's crypto stack (@noble/curves, @noble/hashes, @scure/bip32),
+/// reference vectors's crypto stack (an independent curve/hash stack),
 /// so agreement here pins this port to the same primitives byte-for-byte.
 void main() {
   final kat =

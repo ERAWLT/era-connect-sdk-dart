@@ -1,3 +1,5 @@
+import 'package:era_connect/src/core/errors.dart';
+import 'dart:typed_data';
 import 'package:era_connect/src/core/bytes.dart';
 import 'package:era_connect/src/ur/decoder.dart';
 import 'package:era_connect/src/ur/encoder.dart';
@@ -50,6 +52,7 @@ const List<String> multiPartFrames = [
 ];
 
 void main() {
+  _urGrammarRegression();
   group('BCR-2020-005 reference vectors', () {
     test('decodes and re-encodes the single-part vector', () {
       final decoder = UrDecoder();
@@ -98,6 +101,25 @@ void main() {
       }
       expect(complete, true);
       expect(bytesToHex(decoder.result().cbor), multiPartCbor);
+    });
+  });
+}
+
+void _urGrammarRegression() {
+  group('UR type grammar', () {
+    test('a type containing a digit round-trips', () {
+      // The constructor has always accepted [a-z][a-z0-9-]*, while the parser
+      // accepted only [a-z-]+ — so a digit-bearing type could be built and
+      // then refused as not-a-ur on the way back in. No registry type in use
+      // today carries a digit; this pins the grammar for the next one that does.
+      final ur = Ur('sui2-sign-request', Uint8List.fromList([0xa0]));
+      final parsed = parseUrString(ur.toString());
+      expect(parsed.type, 'sui2-sign-request');
+      expect(parsed.payload, ur.cbor);
+    });
+
+    test('a type starting with a digit is still refused', () {
+      expect(() => parseUrString('ur:2sui/oyaa'), throwsA(isA<EraSdkError>()));
     });
   });
 }

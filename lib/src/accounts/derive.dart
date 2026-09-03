@@ -59,7 +59,7 @@ String btcP2wpkhAddressFromPublicKey(
   );
 }
 
-/// Legacy P2PKH base58check address (`1...`) — the kind the device signs messages for.
+/// Legacy P2PKH base58check address (`1...`).
 String btcP2pkhAddressFromPublicKey(
   Uint8List publicKey33, [
   bool testnet = false,
@@ -83,6 +83,55 @@ String btcNestedSegwitAddressFromPublicKey(
     Uint8List.fromList([testnet ? 0xc4 : 0x05]),
     hash160(redeemScript),
   ]));
+}
+
+/// Cosmos bech32 address: plain bech32 of the 20-byte hash160, with NO
+/// witness-version prefix (that is a segwit thing, not a Cosmos one). Every
+/// zone carries its own HRP over the same key, so [prefix] is the caller's.
+String cosmosAddressFromPublicKey(Uint8List publicKey33, String prefix) {
+  return bech32Encode(
+    prefix,
+    convertBits(hash160(publicKey33), 8, 5, pad: true),
+  );
+}
+
+/// The XRPL base58 dictionary: the same 58 symbols as Bitcoin's, in a
+/// different order. The alphabet is part of the address format, not a
+/// presentation detail — encoding an account under the wrong one yields a
+/// well-formed address for somebody else.
+const String _xrpBase58Alphabet =
+    'rpshnaf39wBUDNEGHJKLM4PQRST7VWXYZ2bcdeCg65jkm8oFqi1tuvAxyz';
+
+/// base58 over an explicit dictionary; each leading zero byte keeps its
+/// one-symbol encoding.
+String _base58EncodeWith(Uint8List bytes, String alphabet) {
+  var value = bytesToBigint(bytes);
+  final fiftyEight = BigInt.from(58);
+  final out = StringBuffer();
+  while (value > BigInt.zero) {
+    out.write(alphabet[(value % fiftyEight).toInt()]);
+    value = value ~/ fiftyEight;
+  }
+  for (final b in bytes) {
+    if (b != 0) break;
+    out.write(alphabet[0]);
+  }
+  return String.fromCharCodes(out.toString().codeUnits.reversed);
+}
+
+/// XRP classic address (`r...`): base58check over `0x00 || hash160(pubkey)`,
+/// with Bitcoin's double-SHA-256 checksum but XRPL's own base58 dictionary.
+/// [base58CheckEncode] is hard-wired to the Bitcoin alphabet, so the four
+/// checksum bytes are appended explicitly here.
+String xrpAddressFromPublicKey(Uint8List publicKey33) {
+  final payload = concatBytes([
+    Uint8List.fromList([0x00]),
+    hash160(publicKey33),
+  ]);
+  return _base58EncodeWith(
+    concatBytes([payload, Uint8List.sublistView(sha256d(payload), 0, 4)]),
+    _xrpBase58Alphabet,
+  );
 }
 
 /// Tron base58check address (0x41-prefixed keccak hash).

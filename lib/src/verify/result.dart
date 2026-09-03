@@ -1,7 +1,7 @@
 /// Outcome of a verification helper. Helpers return, never throw, on
 /// mismatches.
 ///
-/// Mirrors the TypeScript SDK's discriminated union as a sealed class:
+/// A sealed result:
 /// [Verified], [Unverifiable] (ok but nothing was checkable client-side) and
 /// [Failed].
 sealed class VerifyResult {

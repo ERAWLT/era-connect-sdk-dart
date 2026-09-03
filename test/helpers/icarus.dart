@@ -86,7 +86,7 @@ Uint8List publicKeyOf(Uint8List kL) {
   return ed25519ScalarMultBase(scalar);
 }
 
-/// PBKDF2-HMAC-SHA512 (RFC 8018). Test-only: the TypeScript helper uses the
+/// PBKDF2-HMAC-SHA512 (RFC 8018). Test-only: the reference helper uses the
 /// noble implementation; this one is hand-rolled on `package:crypto`'s Hmac.
 Uint8List pbkdf2HmacSha512(
   Uint8List password,

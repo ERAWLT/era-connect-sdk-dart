@@ -1,5 +1,5 @@
 {
-  "note": "Generated from the TypeScript SDK. Synthetic key only: ed25519 seed = sha256(utf8(\"era-connect-ton-parity\")).",
+  "note": "Generated from the reference vectors. Synthetic key only: ed25519 seed = sha256(utf8(\"era-connect-ton-parity\")).",
   "publicKeyHex": "f854293175d704095f8041dab636201191b9c863222785d1ce46a7bcb5df93bd",
   "requestIdHex": "9b1deb4d3b7d4bad9bdd2b0d7b3dcb6d",
   "requests": [

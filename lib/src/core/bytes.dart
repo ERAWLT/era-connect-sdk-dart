@@ -84,9 +84,10 @@ BigInt bytesToBigint(Uint8List bytes) {
   return out;
 }
 
-/// UTF-8 encode. Hand-rolled to stay byte-identical with the TypeScript SDK
-/// (which cannot rely on `TextEncoder` everywhere); throws on an unpaired
-/// surrogate instead of emitting U+FFFD.
+/// UTF-8 encode. Hand-rolled so the byte output is identical on every
+/// platform this package targets; throws on an unpaired surrogate instead of
+/// silently emitting U+FFFD, because a request is content-addressed and a
+/// substituted character changes what gets signed.
 Uint8List utf8Encode(String text) {
   final out = <int>[];
   for (var i = 0; i < text.length; i++) {

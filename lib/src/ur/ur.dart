@@ -27,7 +27,8 @@ class Ur {
   String toWireString() => toString().toUpperCase();
 }
 
-final RegExp _urGrammar = RegExp(r'^ur:([a-z-]+)(/(\d+-\d+))?/([a-z]+)$');
+final RegExp _urGrammar =
+    RegExp(r'^ur:([a-z][a-z0-9-]*)(/(\d+-\d+))?/([a-z]+)$');
 
 /// The `seqNum-seqLength` segment of a multi-part `ur:` path.
 class UrSequence {
@@ -59,7 +60,7 @@ class ParsedUrParts {
 }
 
 /// The largest sequence number/length a `ur:` path may carry — the same
-/// `Number.isSafeInteger` bound (2^53 - 1) the TypeScript SDK enforces.
+/// 2^53-1 safe-integer bound (web builds cannot represent more).
 const int _maxSafeInteger = 9007199254740991;
 
 /// Parse one `ur:` string into (type, sequence, decoded payload).

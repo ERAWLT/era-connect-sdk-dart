@@ -108,7 +108,7 @@ const int _blindSignThreshold = 32 * 1024;
 
 const List<String> _replyTypes = ['eth-signature', 'evm-signature'];
 
-/// The `Number.isSafeInteger` bound (2^53 - 1) the TypeScript SDK enforces.
+/// The 2^53-1 safe-integer bound (web builds cannot represent more).
 const int _maxSafeInteger = 9007199254740991;
 
 /// The EVM chain module: `eth-sign-request` out, `eth-signature` back.

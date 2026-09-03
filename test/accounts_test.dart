@@ -9,6 +9,7 @@ import 'package:era_connect/src/cbor/model.dart';
 import 'package:era_connect/src/core/bytes.dart';
 import 'package:era_connect/src/core/errors.dart';
 import 'package:era_connect/src/crypto/bip32.dart';
+import 'package:era_connect/src/crypto/codecs.dart';
 import 'package:era_connect/src/crypto/digests.dart';
 import 'package:era_connect/src/ur/ur.dart';
 import 'package:pointycastle/ecc/api.dart';
@@ -58,16 +59,25 @@ class TestHdNode {
 
   int get fingerprint => publicKeyFingerprint(publicKey);
 
-  /// Derive `m/i0'/i1'/...` (every level hardened, which is all the wallet
-  /// exports in this suite need).
-  TestHdNode deriveHardened(List<int> indices) {
+  /// Derive `m/i0'/i1'/...` (every level hardened, which is what a wallet
+  /// export's account entries are).
+  TestHdNode deriveHardened(List<int> indices) =>
+      derivePath([for (final index in indices) (index, true)]);
+
+  /// Derive a full path, hardened or not. The soft `0/index` tail is the
+  /// private side of what a watch-only view reproduces from the account key
+  /// alone, so an address computed down this route owes nothing to the code
+  /// under test.
+  TestHdNode derivePath(List<(int, bool)> levels) {
     var node = this;
-    for (final index in indices) {
-      final data = concatBytes([
-        Uint8List.fromList([0]),
-        _ser256(node._key),
-        u32be(0x80000000 + index),
-      ]);
+    for (final (index, hardened) in levels) {
+      final data = hardened
+          ? concatBytes([
+              Uint8List.fromList([0]),
+              _ser256(node._key),
+              u32be(0x80000000 + index),
+            ])
+          : concatBytes([node.publicKey, u32be(index)]);
       final i = hmacSha512(node.chainCode, data);
       final il = bytesToBigint(Uint8List.sublistView(i, 0, 32));
       node = TestHdNode._(
@@ -78,6 +88,47 @@ class TestHdNode {
     }
     return node;
   }
+}
+
+// --- expectations assembled by hand from byte primitives ---------------------
+
+/// The bech32 address a Cosmos zone spells for [node]'s key under [prefix]:
+/// hash160 of the compressed key, regrouped to 5-bit words, no witness
+/// version. Built from the primitives so it shares no code with the view.
+String bech32AddressOf(TestHdNode node, String prefix) {
+  return bech32Encode(
+    prefix,
+    convertBits(hash160(node.publicKey), 8, 5, pad: true),
+  );
+}
+
+/// XRPL's own base58 dictionary — the same 58 symbols as Bitcoin's, ordered
+/// differently.
+const String xrpAlphabet =
+    'rpshnaf39wBUDNEGHJKLM4PQRST7VWXYZ2bcdeCg65jkm8oFqi1tuvAxyz';
+
+/// The XRPL classic address of [node]'s key, spelled out step by step:
+/// `0x00 || hash160(key)`, four bytes of double-SHA-256, base58 over the XRPL
+/// dictionary.
+String xrpAddressOf(TestHdNode node) {
+  final payload = concatBytes([
+    Uint8List.fromList([0x00]),
+    hash160(node.publicKey),
+  ]);
+  final raw =
+      concatBytes([payload, Uint8List.sublistView(sha256d(payload), 0, 4)]);
+  final fiftyEight = BigInt.from(58);
+  var value = bytesToBigint(raw);
+  final out = StringBuffer();
+  while (value > BigInt.zero) {
+    out.write(xrpAlphabet[(value % fiftyEight).toInt()]);
+    value = value ~/ fiftyEight;
+  }
+  for (final b in raw) {
+    if (b != 0) break;
+    out.write(xrpAlphabet[0]);
+  }
+  return String.fromCharCodes(out.toString().codeUnits.reversed);
 }
 
 // --- wallet-export CBOR builders --------------------------------------------
@@ -120,6 +171,8 @@ EraAccounts buildWallet() {
   final evm = master.deriveHardened([44, 60, 0]);
   final btc = master.deriveHardened([84, 0, 0]);
   final tron = master.deriveHardened([44, 195, 0]);
+  final cosmos = master.deriveHardened([44, 118, 0]);
+  final xrp = master.deriveHardened([44, 144, 0]);
   final walletCbor = cborEncode(
     cbMap([
       (1, cbUint(master.fingerprint)),
@@ -133,6 +186,8 @@ EraAccounts buildWallet() {
           ),
           accountEntry(btc, [(84, true), (0, true), (0, true)]),
           accountEntry(tron, [(44, true), (195, true), (0, true)]),
+          accountEntry(cosmos, [(44, true), (118, true), (0, true)]),
+          accountEntry(xrp, [(44, true), (144, true), (0, true)]),
         ])
       ),
       (3, cbText('ERA Wallet')),
@@ -167,7 +222,7 @@ void main() {
         btc.zpub(),
         'zpub6rFR7y4Q2AijBEqTUquhVz398htDFrtymD9xYYfG1m4wAcvPhXNfE3EfH1r1ADqtfSdVCToUG868RvUUkgDKf31mGDtKsAYz2oz2AGutZYs',
       );
-      // Independent oracle for the generic serialization: @scure/bip32's own
+      // Independent oracle for the generic serialization: an independent BIP-32 implementation's
       // publicExtendedKey for m/84'/0'/0' of the same public seed.
       expect(
         btc.xpub(),
@@ -181,10 +236,82 @@ void main() {
       expect(address.length, 34);
     });
 
+    test('derives Cosmos addresses under whichever zone HRP is asked for', () {
+      final cosmos = accounts.cosmos()!;
+      final child = TestHdNode.fromMasterSeed(testSeed).derivePath(
+          [(44, true), (118, true), (0, true), (0, false), (0, false)]);
+      expect(cosmos.accountPath, "m/44'/118'/0'");
+      expect(cosmos.xfp, '12345678');
+      expect(cosmos.pathFor(4), "m/44'/118'/0'/0/4");
+      expect(
+          bytesToHex(cosmos.derivePublicKey(0)), bytesToHex(child.publicKey));
+      // One key, one hash160, as many addresses as there are zones — which is
+      // why the prefix has no default.
+      expect(cosmos.deriveAddress(0, prefix: 'cosmos'),
+          bech32AddressOf(child, 'cosmos'));
+      expect(cosmos.deriveAddress(0, prefix: 'osmo'),
+          bech32AddressOf(child, 'osmo'));
+      expect(cosmos.deriveAddress(0, prefix: 'celestia'),
+          bech32AddressOf(child, 'celestia'));
+      expect(cosmos.deriveAddress(0, prefix: 'cosmos'), startsWith('cosmos1'));
+    });
+
+    test('derives the XRP classic address of the linked account', () {
+      final xrp = accounts.xrp()!;
+      final child = TestHdNode.fromMasterSeed(testSeed).derivePath(
+          [(44, true), (144, true), (0, true), (0, false), (0, false)]);
+      expect(xrp.accountPath, "m/44'/144'/0'");
+      expect(xrp.xfp, '12345678');
+      expect(bytesToHex(xrp.derivePublicKey(0)), bytesToHex(child.publicKey));
+      expect(xrp.deriveAddress(0), xrpAddressOf(child));
+      expect(xrp.deriveAddress(0), startsWith('r'));
+      expect(
+        xrp.deriveAddress(1),
+        xrpAddressOf(TestHdNode.fromMasterSeed(testSeed).derivePath(
+            [(44, true), (144, true), (0, true), (0, false), (1, false)])),
+      );
+    });
+
+    test('the device signs XRP with one named path', () {
+      final xrp = accounts.xrp()!;
+      expect(xrp.signingPath, "m/44'/144'/0'/0/0");
+      expect(xrp.pathFor(0), xrp.signingPath);
+      expect(xrp.pathFor(2), "m/44'/144'/0'/0/2");
+    });
+
+    test('classifies the Cosmos and XRP entries by path, not by label', () {
+      final byPath = {for (final key in accounts.keys) key.path: key.chain};
+      expect(byPath["m/44'/118'/0'"], AccountChain.cosmos);
+      expect(byPath["m/44'/144'/0'"], AccountChain.xrp);
+      expect(byPath["m/44'/144'/0'"], isNot(AccountChain.unknown));
+    });
+
+    test('reproduces the published XRPL address of a published key', () {
+      // The XRPL account whose secp256k1 signing key this is — the pairing is
+      // published, so a codec that agrees with it is right about the
+      // alphabet, the 0x00 type prefix and the double-SHA-256 checksum at
+      // once.
+      expect(
+        derive.xrpAddressFromPublicKey(hexToBytes(
+            '0330E7FC9D56BB25D6893BA3F317AE5BCF33B3291BD63DB32654A313222F7FD020')),
+        'rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh',
+      );
+      // The published worked example uses an Ed25519 key (0xED-prefixed).
+      // The encoding does not care which curve produced the 33 bytes, and
+      // pinning both proves that.
+      expect(
+        derive.xrpAddressFromPublicKey(hexToBytes(
+            'ED9434799226374926EDA3B54B1B461B4ABF7237962EAE18528FEA67595397FA32')),
+        'rDTXLQ7ZKZVKz33zJbHjgVShjsBnqMBhmN',
+      );
+    });
+
     test('paths and xfps follow the linked entries', () {
       expect(accounts.evm()?.pathFor(7), "m/44'/60'/0'/0/7");
       expect(accounts.btc()?.changePath(3), "m/84'/0'/0'/1/3");
       expect(accounts.xfpFor("m/84'/0'/0'"), '12345678');
+      expect(accounts.xfpFor("m/44'/118'/0'"), '12345678');
+      expect(accounts.xfpFor("m/44'/144'/0'"), '12345678');
       expect(() => accounts.xfpFor("m/49'/0'/0'"), throwsA(isA<EraSdkError>()));
     });
 
@@ -412,7 +539,7 @@ void main() {
 
   group('the golden wallet export parses end-to-end', () {
     final fixture = jsonDecode(
-      File('test/fixtures/ts-parity-golden.json').readAsStringSync(),
+      File('test/fixtures/reference-golden.json').readAsStringSync(),
     ) as Map<String, dynamic>;
     final walletUr = fixture['walletUr'] as String;
     final wallet = fixture['wallet'] as Map<String, dynamic>;

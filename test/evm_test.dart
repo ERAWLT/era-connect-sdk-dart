@@ -20,7 +20,7 @@ Matcher throwsSdkErrorCode(String code) =>
     throwsA(isA<EraSdkError>().having((e) => e.code, 'code', code));
 
 /// Deterministic (RFC 6979) low-S secp256k1 signing over a raw digest —
-/// test-only: the SDK itself never holds keys. Mirrors what the TypeScript
+/// test-only: the SDK itself never holds keys. Mirrors what the reference implementation
 /// suite gets from its curve library.
 ({Uint8List bytes, int recovery}) signDigest(
     Uint8List digest, Uint8List privateKey) {
@@ -210,7 +210,7 @@ void main() {
 
   group('byte-exact golden requests vs the reference implementation', () {
     final fixture = jsonDecode(
-      File('test/fixtures/ts-parity-golden.json').readAsStringSync(),
+      File('test/fixtures/reference-golden.json').readAsStringSync(),
     ) as Map<String, dynamic>;
     final golden = EvmChain(
       EraConnectConfig(origin: fixture['origin'] as String),

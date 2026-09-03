@@ -46,7 +46,9 @@ void main() {
   //      final check = verify.verifyEvmSignature(...);
   //      if (!check.ok) throw StateError(check.reason!);
   //
-  // Chain guides with complete, runnable reply/verify flows:
-  // https://github.com/ERAWLT/era-connect-sdk/tree/main/docs
+  // Chain guides with complete, runnable reply/verify flows live in doc/:
+  //   doc/getting-started/  — the five-step funnel
+  //   doc/chains/           — one guide per chain family
+  //   doc/advanced/         — verification, QR tuning, Flutter integration
   print(verify.verified.ok); // the verify library is one import away
 }

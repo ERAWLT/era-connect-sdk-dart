@@ -15,7 +15,7 @@ import 'package:test/test.dart';
 Matcher throwsSdkError(String code) =>
     throwsA(isA<EraSdkError>().having((e) => e.code, 'code', code));
 
-/// Parity against the TypeScript SDK: requests rebuilt from the recorded
+/// Parity against the reference vectors: requests rebuilt from the recorded
 /// props must produce the identical post-gunzip protobuf (gzip BYTES are not
 /// comparable across implementations), and the recorded replies — genuine,
 /// tampered and rebuilt — must parse and verify to the recorded verdicts.

@@ -33,10 +33,12 @@ export 'src/accounts/derive.dart'
         btcNestedSegwitAddressFromPublicKey,
         btcP2pkhAddressFromPublicKey,
         btcP2wpkhAddressFromPublicKey,
+        cosmosAddressFromPublicKey,
         evmAddressFromPublicKey,
         solanaAddressFromPublicKey,
         suiAddressFromPublicKey,
-        tronAddressFromPublicKey;
+        tronAddressFromPublicKey,
+        xrpAddressFromPublicKey;
 export 'src/chains/bch.dart';
 export 'src/chains/btc.dart';
 export 'src/chains/cardano.dart';
@@ -57,7 +59,12 @@ export 'src/chains/xrp.dart';
 export 'src/core/errors.dart';
 export 'src/core/rand.dart' show RandomBytesFn;
 export 'src/hardware_call/key_derivation.dart'
-    show HardwareCallRequest, KeyDerivationCallProps, KeyDerivationSchema;
+    show
+        DerivationAlgorithm,
+        DerivationCurve,
+        HardwareCallRequest,
+        KeyDerivationCallProps,
+        KeyDerivationSchema;
 export 'src/qr/animated_ur.dart';
 export 'src/raw.dart';
 export 'src/registry/keypath.dart' show PathLevel, formatPath, parsePath;

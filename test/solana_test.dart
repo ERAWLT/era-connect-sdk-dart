@@ -79,7 +79,7 @@ void main() {
 
   group('byte-exact golden requests vs the golden fixture', () {
     final fixture = jsonDecode(
-      File('test/fixtures/ts-parity-golden.json').readAsStringSync(),
+      File('test/fixtures/reference-golden.json').readAsStringSync(),
     ) as Map<String, dynamic>;
     final cases = (fixture['cases'] as List).cast<Map<String, dynamic>>();
     Map<String, dynamic> caseByName(String name) {

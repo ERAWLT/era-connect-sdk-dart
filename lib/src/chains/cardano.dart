@@ -117,8 +117,7 @@ const List<String> _replyTypes = ['cardano-signature'];
 const int _utxoTag = 2201;
 const int _certKeyTag = 2204;
 
-/// The same `Number.isSafeInteger` bound (2^53 - 1) the TypeScript SDK
-/// enforces on a utxo index.
+/// The 2^53-1 safe-integer bound on a utxo index.
 const int _maxSafeInteger = 9007199254740991;
 
 /// The Cardano chain module: `cardano-sign-request` out, `cardano-signature`

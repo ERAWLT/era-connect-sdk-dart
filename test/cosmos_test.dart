@@ -16,7 +16,7 @@ void main() {
 
   group('Cosmos', () {
     // Synthetic key: priv = 32 bytes of 0x05. The public key and the two
-    // RFC6979 signatures below are the deterministic outputs the TypeScript
+    // RFC6979 signatures below are the deterministic outputs the reference implementation
     // suite computes live (this SDK deliberately cannot sign).
     final pub = hexToBytes(
         '0362c0a046dacce86ddd0343c6d3c7c79c2208ba0d9c9cf24a6d046d21d21f90f7');

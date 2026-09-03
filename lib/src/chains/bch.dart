@@ -137,7 +137,7 @@ const List<String> _replyTypes = ['keystone-sign-result'];
 /// Satoshi amounts must stay exact in a double; anything above is refused.
 final BigInt _maxSatoshi = BigInt.from(2100000000000000); // 21M coins
 
-/// The `Number.isSafeInteger` bound the TypeScript SDK enforces — kept for
+/// The 2^53-1 safe-integer bound web builds impose — kept for
 /// web (dart2js) parity, where int precision ends at 2^53 too.
 const int _maxSafeInteger = 9007199254740991;
 
@@ -146,8 +146,8 @@ BigInt _toSatoshi(Object value, String label) {
   if (value is BigInt) {
     v = value;
   } else if (value is int) {
-    // Refuse amounts past 2^53 as non-integers, exactly like the TypeScript
-    // SDK's Number.isSafeInteger gate.
+    // Refuse amounts past 2^53: a web build cannot represent them exactly,
+    // and a satoshi amount that silently loses precision is a wrong payment.
     if (value > _maxSafeInteger || value < -_maxSafeInteger) {
       throw EraSdkError(
         'invalid-props',

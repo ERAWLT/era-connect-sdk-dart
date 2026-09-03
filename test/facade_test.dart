@@ -12,7 +12,7 @@ void main() {
   final era = EraConnect(EraConnectConfig(origin: 'Facade Test'));
 
   final golden = jsonDecode(
-    File('test/fixtures/ts-parity-golden.json').readAsStringSync(),
+    File('test/fixtures/reference-golden.json').readAsStringSync(),
   ) as Map<String, dynamic>;
 
   test('links the golden wallet and exposes every chain getter', () {

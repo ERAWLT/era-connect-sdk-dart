@@ -35,6 +35,9 @@ enum AccountChain {
   /// `m/44'/118'` — Cosmos.
   cosmos,
 
+  /// `m/44'/144'` — XRP.
+  xrp,
+
   /// A path this SDK does not map to a chain family.
   unknown,
 }
@@ -109,6 +112,7 @@ AccountChain _classify(List<PathLevel> path) {
   if (p0.index == 1852 && p1.index == 1815) return AccountChain.cardano;
   if (p0.index == 44 && p1.index == 784) return AccountChain.sui;
   if (p0.index == 44 && p1.index == 118) return AccountChain.cosmos;
+  if (p0.index == 44 && p1.index == 144) return AccountChain.xrp;
   return AccountChain.unknown;
 }
 
@@ -169,8 +173,10 @@ typedef BtcPurpose = int;
 
 /// Bitcoin view over one exported account. The default is the BIP-84
 /// native-segwit account; pass `purpose` to reach the other script types the
-/// device exports (44 = legacy P2PKH — the kind the device signs MESSAGES for,
-/// 49 = nested segwit, 86 = taproot).
+/// device exports (44 = legacy P2PKH, 49 = nested segwit, 84 = native
+/// segwit, 86 = taproot). Which of those can sign MESSAGES depends on the
+/// firmware: 2.1.0+ signs 44/49/84 and refuses Taproot, older firmware signs
+/// legacy P2PKH alone.
 class BtcAccountView {
   BtcAccountView(this._entry, this._testnet, this.purpose, this._resolvedXfp);
 
@@ -401,6 +407,75 @@ class SolanaAccountView {
       derive.solanaAddressFromPublicKey(_requireKey(_entry, 32));
 }
 
+/// Cosmos view (`m/44'/118'/0'`): one secp256k1 account key, addresses
+/// derived at `0/index`. The bech32 PREFIX is the caller's — every zone
+/// spends the same key under its own HRP (`cosmos`, `osmo`, `celestia`, ...),
+/// so there is no correct default and [deriveAddress] requires one.
+///
+/// Ethermint zones (Injective, Evmos, Dymension, ...) are the exception: they
+/// sign with `m/44'/60'` keys, so they come back as the EVM account, not this
+/// one.
+class CosmosAccountView {
+  CosmosAccountView(this._entry, this._resolvedXfp);
+
+  final RawAccountEntry _entry;
+  final int _resolvedXfp;
+
+  /// The account's source fingerprint, lowercase 8-hex.
+  String get xfp => xfpToHex(_resolvedXfp);
+
+  /// The account-level derivation path.
+  String get accountPath => formatPath(_entry.path);
+
+  /// Signing path for address `index`: `<account>/0/<index>`.
+  String pathFor(int index) => '$accountPath/0/$index';
+
+  /// The compressed secp256k1 key at `0/index` — what a sign request's path names.
+  Uint8List derivePublicKey(int index) {
+    return derive.derivePublicKey(
+        _requireKey(_entry, 33), _withChainCode(_entry), 0, index);
+  }
+
+  /// Bech32 address under the zone's own HRP, e.g. `prefix: 'osmo'`.
+  String deriveAddress(int index, {required String prefix}) {
+    return derive.cosmosAddressFromPublicKey(derivePublicKey(index), prefix);
+  }
+}
+
+/// XRP view (`m/44'/144'/0'`). The device signs with ONE key — the address at
+/// `0/0` — so [signingPath] names it, and the hex of `derivePublicKey(0)` is
+/// what an unsigned transaction's `SigningPubKey` must carry. [pathFor] is
+/// there for wallets that scan further addresses of the same account.
+class XrpAccountView {
+  XrpAccountView(this._entry, this._resolvedXfp);
+
+  final RawAccountEntry _entry;
+  final int _resolvedXfp;
+
+  /// The account's source fingerprint, lowercase 8-hex.
+  String get xfp => xfpToHex(_resolvedXfp);
+
+  /// The account-level derivation path.
+  String get accountPath => formatPath(_entry.path);
+
+  /// The only path the device signs with: `<account>/0/0`.
+  String get signingPath => '$accountPath/0/0';
+
+  /// Signing path for address `index`: `<account>/0/<index>`.
+  String pathFor(int index) => '$accountPath/0/$index';
+
+  /// The compressed secp256k1 key at `0/index`.
+  Uint8List derivePublicKey(int index) {
+    return derive.derivePublicKey(
+        _requireKey(_entry, 33), _withChainCode(_entry), 0, index);
+  }
+
+  /// Classic `r...` address of the key at `0/index`.
+  String deriveAddress(int index) {
+    return derive.xrpAddressFromPublicKey(derivePublicKey(index));
+  }
+}
+
 String _extendedKeyOf(RawAccountEntry entry, [int? version]) {
   final chainCode = _withChainCode(entry);
   final publicKey = _requireKey(entry, 33);
@@ -487,8 +562,9 @@ class EraAccounts {
   }
 
   /// A Bitcoin account view. Defaults to the BIP-84 native-segwit account;
-  /// pass `purpose: 44` for the legacy P2PKH account (message signing), 49
-  /// for nested segwit, 86 for taproot — if the export carries them.
+  /// pass `purpose: 44` for legacy P2PKH, 49 for nested segwit, 86 for
+  /// taproot — if the export carries them. See [BtcAccountView] for which
+  /// script types can sign messages on which firmware.
   BtcAccountView? btc({bool testnet = false, BtcPurpose purpose = 84}) {
     final entry = _find((e) =>
         _classify(e.path) == AccountChain.btc &&
@@ -542,6 +618,18 @@ class EraAccounts {
             e.publicKey?.length == 32)
         .map((e) => SolanaAccountView(e, _resolveXfp(e)))
         .toList();
+  }
+
+  /// The Cosmos account (`m/44'/118'/0'`), if the export carries one.
+  CosmosAccountView? cosmos() {
+    final entry = _find((e) => _classify(e.path) == AccountChain.cosmos);
+    return entry == null ? null : CosmosAccountView(entry, _resolveXfp(entry));
+  }
+
+  /// The XRP account (`m/44'/144'/0'`), if the export carries one.
+  XrpAccountView? xrp() {
+    final entry = _find((e) => _classify(e.path) == AccountChain.xrp);
+    return entry == null ? null : XrpAccountView(entry, _resolveXfp(entry));
   }
 
   RawAccountEntry _entryFor(String accountPath) {

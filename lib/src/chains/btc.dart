@@ -275,9 +275,9 @@ BtcMessageSignatureResult _parseMessageSignature(
 
 final RegExp _base64Grammar = RegExp(r'^[A-Za-z0-9+/]*={0,2}$');
 
-/// Strict standard-alphabet base64 decode. The TypeScript SDK decodes the
-/// device quirk with `@scure/base`, which refuses the URL-safe alphabet;
-/// `dart:convert` alone accepts BOTH alphabets, so the alphabet is pinned
+/// Strict standard-alphabet base64 decode. `dart:convert` accepts BOTH the
+/// standard and the URL-safe alphabet, so a reply spelled in the wrong one
+/// would quietly decode instead of being refused; the alphabet is pinned
 /// here first (padding placement and non-zero padding bits are already
 /// refused by `base64Decode` itself).
 Uint8List _base64DecodeStrict(String text) {

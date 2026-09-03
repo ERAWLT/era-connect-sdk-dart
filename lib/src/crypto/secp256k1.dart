@@ -6,10 +6,10 @@ import 'package:pointycastle/ecc/curves/secp256k1.dart';
 import '../core/bytes.dart';
 
 /// secp256k1 verification and public-key recovery, hand-rolled on the curve
-/// primitives so the semantics match the TypeScript SDK's `@noble/curves`
-/// usage exactly — including the LOW-S rule: a signature with `s > n/2` is
-/// refused as malleated, the same default every verifier in this SDK relies
-/// on. Signing deliberately does not exist here; this SDK never holds keys.
+/// primitives so the rules are explicit rather than inherited — including
+/// LOW-S: a signature with `s > n/2` is refused as malleated, which every
+/// verifier in this SDK relies on. Signing deliberately does not exist here;
+/// this SDK never holds keys.
 class Secp256k1 {
   Secp256k1._();
 

@@ -8,7 +8,7 @@ import 'package:era_connect/src/core/errors.dart';
 import 'package:era_connect/src/verify/ton.dart';
 import 'package:test/test.dart';
 
-/// Parity fixture generated from the TypeScript SDK: every request must
+/// Parity fixture generated from the reference vectors: every request must
 /// rebuild byte for byte, every recorded reply must parse (or refuse) the
 /// same way, and every verify verdict must agree.
 void main() {
@@ -33,7 +33,7 @@ void main() {
     );
   }
 
-  group('TON parity with the TypeScript SDK', () {
+  group('TON parity with the reference vectors', () {
     test('rebuilds every request byte for byte', () {
       for (final entry in fixture['requests'] as List<dynamic>) {
         final req = entry as Map<String, dynamic>;

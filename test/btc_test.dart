@@ -270,9 +270,9 @@ void main() {
     });
   });
 
-  group('byte-exact golden requests vs the TypeScript implementation', () {
+  group('byte-exact golden requests vs an independent implementation', () {
     final fixture = jsonDecode(
-            File('test/fixtures/ts-parity-golden.json').readAsStringSync())
+            File('test/fixtures/reference-golden.json').readAsStringSync())
         as Map<String, dynamic>;
     final cases =
         (fixture['cases'] as List<dynamic>).cast<Map<String, dynamic>>();

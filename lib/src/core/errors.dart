@@ -1,8 +1,7 @@
 /// Every error thrown by this SDK.
 ///
-/// [code] is stable API and mirrors the TypeScript SDK's `EraErrorCode`
-/// union verbatim — integrators branch on it, never on [message] (messages
-/// are for humans and may change). The closed set of codes:
+/// [code] is stable API — integrators branch on it, never on [message]
+/// (messages are for humans and may change). The closed set of codes:
 ///
 /// `no-secure-random`, `not-a-ur`, `wrong-ur-type`, `malformed-bytewords`,
 /// `checksum-mismatch`, `malformed-cbor`, `malformed-sequence`,

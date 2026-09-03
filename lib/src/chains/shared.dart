@@ -34,7 +34,7 @@ class EraConnectConfig {
 /// Resolved SDK configuration handed to every chain module.
 ///
 /// Implements [EraConnectConfig] so [resolveContext] accepts either (the
-/// TypeScript SDK types it as a union).
+/// the wire accepts either form).
 class ChainContext implements EraConnectConfig {
   const ChainContext({
     required this.origin,
@@ -126,7 +126,7 @@ class SignRequest<TResult> {
   }
 }
 
-/// Build a [SignRequest] (mirrors the TypeScript `makeSignRequest`).
+/// Build a [SignRequest]: the UR to display, plus the reply plumbing.
 SignRequest<TResult> makeSignRequest<TResult>({
   required Ur ur,
   Uint8List? requestId,

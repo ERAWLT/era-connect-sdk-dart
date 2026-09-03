@@ -11,7 +11,7 @@ import 'package:era_connect/src/scan/ur_scanner.dart';
 import 'package:era_connect/src/ur/ur.dart';
 import 'package:test/test.dart';
 
-/// Parity against the TypeScript SDK: `test/fixtures/parity/accounts.json`
+/// Parity against the reference vectors: `test/fixtures/parity/accounts.json`
 /// dumps EVERY view output of the reference `parseAccounts` over a
 /// generator-built wallet (fixed synthetic inputs, the standard test seed);
 /// the Dart port must reproduce every value and refuse every tampered reply.

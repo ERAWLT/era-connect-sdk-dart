@@ -19,7 +19,7 @@ const int _maxCells = 256;
 const int _maxCellDataBytes = 128;
 const int _maxRefs = 4;
 
-/// The `Number.isSafeInteger` bound the TypeScript SDK enforces on header
+/// The 2^53-1 safe-integer bound web builds impose on header
 /// integers (2^53 - 1) — kept for cross-SDK parity and web compatibility.
 const int _maxSafeInteger = 9007199254740991;
 
@@ -60,9 +60,9 @@ Uint8List bocRootHash(Uint8List boc) {
     for (var i = 0; i < byteLen; i++) {
       if (pos >= boc.length) throw _err('truncated header');
       value = value * 256 + boc[pos++];
-      // Checked per step (the TypeScript SDK checks once after the loop, but
-      // the accumulator is monotonic, so the rejection set is identical —
-      // and this keeps a native 64-bit int from wrapping first).
+      // Checked per step, not once at the end: the accumulator is monotonic
+      // so the rejection set is the same either way, and stopping here keeps
+      // a native 64-bit int from wrapping before the check can see it.
       if (value > _maxSafeInteger) throw _err('header value out of range');
     }
     return value;

@@ -67,8 +67,7 @@ EraSdkError _err(String message) {
   return EraSdkError('malformed-reply', 'psbt: $message');
 }
 
-/// The same `Number.isSafeInteger` bound (2^53 - 1) the TypeScript SDK
-/// enforces on compact-size lengths.
+/// The 2^53-1 safe-integer bound on compact-size lengths.
 final BigInt _maxSafeInteger = BigInt.from(9007199254740991);
 
 class _Reader {

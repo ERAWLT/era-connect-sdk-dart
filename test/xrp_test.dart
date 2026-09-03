@@ -24,7 +24,7 @@ Uint8List compressedPublicKey(Uint8List priv) {
 }
 
 /// Deterministic (RFC 6979) low-S ECDSA over a raw 32-byte digest, DER
-/// encoded — the same signature shape `@noble/curves` produces in the
+/// encoded — the same signature shape `an independent curve library produces in the
 /// reference SDK's tests.
 Uint8List signDerLowS(Uint8List digest32, Uint8List priv) {
   final signer = ECDSASigner(null, HMac(SHA256Digest(), 64));

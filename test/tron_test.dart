@@ -30,8 +30,8 @@ Matcher throwsSdkError(String code) =>
 
 // ---------------------------------------------------------------------------
 // Test-only secp256k1 signing (the SDK deliberately has no signer): RFC 6979
-// deterministic k, low-S normalized — the same semantics as the TypeScript
-// test suite's @noble/curves signer.
+// deterministic k, low-S normalized — the same semantics as the reference implementation
+// reference signer.
 // ---------------------------------------------------------------------------
 
 final ECDomainParameters _domain = ECCurve_secp256k1();
@@ -82,7 +82,7 @@ Uint8List signDigest(Uint8List digest) {
 
 // ---------------------------------------------------------------------------
 // Synthetic Tron transactions + firmware-shaped replies (the exact protobuf
-// shapes the firmware emits, mirrored from the TypeScript test suite).
+// shapes the firmware emits, mirrored from the reference test suite).
 // ---------------------------------------------------------------------------
 
 const String _transferUrl = 'type.googleapis.com/protocol.TransferContract';
@@ -338,9 +338,9 @@ void main() {
     });
   });
 
-  group('byte-exact golden requests vs the TypeScript implementation', () {
+  group('byte-exact golden requests vs an independent implementation', () {
     final fixture = jsonDecode(
-      File('test/fixtures/ts-parity-golden.json').readAsStringSync(),
+      File('test/fixtures/reference-golden.json').readAsStringSync(),
     ) as Map<String, dynamic>;
     final goldenEra =
         TronChain(EraConnectConfig(origin: fixture['origin'] as String));

@@ -289,7 +289,7 @@ void main() {
     });
   });
 
-  // The TypeScript suite's "TON linking (Tonkeeper-style standalone
+  // The reference suite's "TON linking (Tonkeeper-style standalone
   // crypto-hdkey)" block exercises EraAccounts, which lives in the registry
   // port — its TON coverage belongs to the accounts test file.
 }

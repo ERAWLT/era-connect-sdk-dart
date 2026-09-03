@@ -1,26 +1,25 @@
 # era_connect
 
-Air-gapped **ERA hardware wallet** integration for Dart and Flutter wallets:
-account linking and transaction signing over animated QR codes (BC-UR /
-Keystone-compatible registry), for **every chain the device ships** — EVM
-(all networks), Bitcoin (+ Litecoin, Dogecoin, Dash, Bitcoin Cash), Solana,
-Tron, TON, Cardano, Sui, Cosmos (~35 zones) and XRP.
+Put the **ERA air-gapped hardware wallet** behind a Dart or Flutter wallet.
+The device never touches a cable or a radio: sign requests leave your app as
+animated QR frames, signatures come back the same way.
 
-This is the Dart port of
-[`@hwlt/era-connect`](https://www.npmjs.com/package/@hwlt/era-connect) —
-**byte-for-byte compatible** with it on every wire format, pinned by
-committed cross-SDK parity fixtures.
+Account linking and transaction signing for **eleven chain families** — EVM
+(all networks), Bitcoin, Litecoin, Dogecoin, Dash, Bitcoin Cash, Solana, Tron,
+TON, Cardano, Sui, Cosmos and XRP.
 
-- **Headless.** You render the QR and own the camera; the SDK owns every byte
-  of the protocol. Pure Dart — works in Flutter (all platforms), CLI and web.
-- **Zero I/O.** No network calls, ever. No `dart:io` in the library.
-- **Verified against the device.** The fountain encoder reproduces the
-  canonical BCR-2020-005 frames bit-for-bit; every request byte-matches the
-  TypeScript SDK that is proven on hardware.
-- **Hardened where it matters.** The scanner refuses hostile QR frames
-  (stream binding needs a second distinct fragment), every reply must echo
-  the request id byte-for-byte, gzip replies inflate under a hard ceiling,
-  and the `verify` library proves the device signed *exactly* what you sent.
+- **Headless.** You render the QR and own the camera; this package owns every
+  byte of the protocol — BC-UR fountain encoding, the Keystone-compatible
+  registry, the CBOR layouts, the reply checks.
+- **Pure Dart.** No plugins, no `dart:io` in the library. Flutter on every
+  target, plus CLI and web.
+- **Zero I/O.** No network calls, ever. Nothing leaves the process.
+- **No keys, ever.** The device signs; this package builds requests, reads
+  replies and derives public addresses. There is no signer here to misuse.
+- **Hardened where it matters.** A scanned QR is attacker-controlled input, so
+  it is treated that way: bounds precede allocations, the scanner refuses
+  hostile frames, every reply must echo its request id, and compressed replies
+  inflate under a hard ceiling.
 
 ## Install
 
@@ -28,22 +27,23 @@ committed cross-SDK parity fixtures.
 dart pub add era_connect
 ```
 
-## 60 seconds to a signature
+## Sixty seconds to a signature
 
 ```dart
 import 'package:era_connect/era_connect.dart';
 
 final era = EraConnect(EraConnectConfig(origin: 'MyWallet')); // shown on device
 
-// 1. LINK — scan the device's "connect" QR.
+// 1. LINK — scan the device's "connect" QR once.
 final scanner = era.scanner(
     UrScannerOptions(expectedTypes: ['crypto-multi-accounts']));
 // feed camera frames: scanner.receivePart(text) until scanner.isComplete
 final accounts = era.parseAccounts(scanner.result());
+
 final evm = accounts.evm()!;
 evm.deriveAddress(0); // 0x… — derived locally, no device round-trip
 
-// 2. SIGN — build the tx with your chain tooling, hand the raw bytes over.
+// 2. SIGN — build the transaction with your chain tooling, hand over the bytes.
 final request = era.evm.generateSignRequest(EvmSignRequestProps(
   signData: rawRlpBytes,
   dataType: EvmDataType.transaction,
@@ -54,68 +54,75 @@ final request = era.evm.generateSignRequest(EvmSignRequestProps(
 
 // 3. DISPLAY — animate the request as QR frames.
 final animated = request.toAnimated();
-// render animated.nextFrame() on a timer (150–250 ms per frame works well)
+// render animated.nextFrame() on a timer (~125 ms per frame)
 
-// 4. SCAN the reply; the request-id echo is enforced for you.
+// 4. SCAN the reply. The request-id echo is enforced for you.
 final replyScanner = request.scanner();
 // feed camera frames …
 final signature = replyScanner.parse();
 
-// 5. VERIFY before broadcasting.
-// import 'package:era_connect/verify.dart';
-// final check = verifyEvmSignature(…);
-// if (!check.ok) throw StateError(check.reason!);
+// 5. VERIFY before broadcasting — see package:era_connect/verify.dart
 ```
+
+Full walkthrough: [doc/getting-started](doc/getting-started/01-install.md).
 
 ## Chain support
 
-Every chain family the current device firmware ships has a dedicated module:
+Ten modules cover eleven families — Litecoin, Dogecoin and Dash ride the
+Bitcoin module, since the device signs them through the same PSBT flow.
 
-| Chain | Sign transaction | Library |
+| Chain | Signing | Library |
 |---|---|---|
-| EVM (all chains) | `eth-sign-request` (tx / personal_sign / EIP-712) | `package:era_connect/evm.dart` |
-| Bitcoin | `crypto-psbt` (PSBT v0); messages per firmware | `package:era_connect/btc.dart` |
-| Litecoin, Dogecoin, Dash | `crypto-psbt-extend` (same flow as Bitcoin) | `package:era_connect/btc.dart` |
-| Bitcoin Cash | structured envelope (FORKID signing, CashAddr) | `package:era_connect/bch.dart` |
-| Solana | `sol-sign-request` (tx + off-chain messages) | `package:era_connect/solana.dart` |
-| Tron | structured envelope (any contract via `rawData`) | `package:era_connect/tron.dart` |
-| TON | `ton-sign-request` (BoC root-hash signing, TON Connect proofs) | `package:era_connect/ton.dart` |
-| Cardano | `cardano-sign-request` (witness-set replies) | `package:era_connect/cardano.dart` |
-| Sui | `sui-sign-request` / hash variant | `package:era_connect/sui.dart` |
-| Cosmos (~35 zones incl. Ethermint) | `cosmos-sign-request` / `evm-sign-request` | `package:era_connect/cosmos.dart` |
-| XRP | `ur:bytes` (XRP Toolkit convention) | `package:era_connect/xrp.dart` |
+| EVM (all networks) | transactions, `personal_sign`, EIP-712 | `package:era_connect/evm.dart` |
+| Bitcoin | PSBT v0; messages (script types depend on firmware) | `package:era_connect/btc.dart` |
+| Litecoin, Dogecoin, Dash | the Bitcoin PSBT flow with a coin id | `package:era_connect/btc.dart` |
+| Bitcoin Cash | structured envelope, FORKID sighash, CashAddr | `package:era_connect/bch.dart` |
+| Solana | transactions (incl. versioned), off-chain messages | `package:era_connect/solana.dart` |
+| Tron | any contract — the raw `raw_data` is what gets signed | `package:era_connect/tron.dart` |
+| TON | BoC root-hash signing, TON Connect proofs | `package:era_connect/ton.dart` |
+| Cardano | witness sets, soft-derived vkey binding | `package:era_connect/cardano.dart` |
+| Sui | intent-message signing, local address derivation | `package:era_connect/sui.dart` |
+| Cosmos (~35 zones incl. Ethermint) | Amino, Direct, ADR-036 | `package:era_connect/cosmos.dart` |
+| XRP | the XRP Toolkit `ur:bytes` convention | `package:era_connect/xrp.dart` |
 
-The root `package:era_connect/era_connect.dart` exports all of it behind the
-[EraConnect] facade; per-chain libraries keep a minimal import surface, and
-`package:era_connect/verify.dart` holds the verification helpers.
+`package:era_connect/era_connect.dart` re-exports all of it behind the
+`EraConnect` facade. The per-chain libraries exist so an app that signs one
+chain does not import ten.
 
-## Verification
+## Verify before you broadcast
 
-The reply's request-id echo proves *which* request was answered — the
-`verify` library proves *what* was signed. Run the chain's helper between
-parsing and broadcasting; it is **mandatory** on the paths that carry no
-request id at all (Bitcoin PSBT, XRP):
+The reply's request-id echo proves *which* request was answered.
+`package:era_connect/verify.dart` proves *what* was signed — it recomputes the
+digest, checks the signature against the key the request named, and compares
+the returned transaction with the one you sent.
 
 ```dart
 import 'package:era_connect/verify.dart';
 
-verifyEvmSignature(…);   verifySignedPsbt(…);    verifyBchSignedTx(…);
-verifySolanaSignature(…); verifyTronSignature(…); verifyTonSignature(…);
-verifyCardanoSignature(…); verifySuiSignature(…);
-verifyCosmosSignature(…);  verifyXrpSignature(…);
+final check = verifyEvmSignature(/* … */);
+if (!check.ok) throw StateError(check.reason!);
 ```
 
-Every helper returns `ok/checked/reason` and fails closed on a substituted
-payload, a tampered value or a signature by the wrong key.
+On two paths there is **no request id at all** — Bitcoin PSBT and XRP — so the
+content check is the only binding you have. Verification is mandatory there,
+not advisory. Details in [doc/advanced/verification.md](doc/advanced/verification.md).
 
 ## Documentation
 
-The protocol guides are shared with the TypeScript SDK — same wire formats,
-same flows, same device:
-[github.com/ERAWLT/era-connect-sdk/docs](https://github.com/ERAWLT/era-connect-sdk/tree/main/docs)
-(per-chain guides, device specifics vs. the Keystone registry, QR tuning,
-verification). Dart-specific API details live in this package's dartdoc.
+- [Getting started](doc/getting-started/01-install.md) — five pages, install
+  to verified signature
+- [Chain guides](doc/README.md#chain-guides) — one per family: props, replies,
+  verification, broadcasting
+- [Verification](doc/advanced/verification.md) · [QR tuning](doc/advanced/qr-tuning.md) ·
+  [Flutter integration](doc/advanced/flutter.md) ·
+  [Key-derivation calls](doc/advanced/key-derivation-call.md) ·
+  [WalletConnect](doc/advanced/walletconnect.md)
+- API reference: the dartdoc on pub.dev
+
+## Security
+
+Found a flaw? Please report it privately — see [SECURITY.md](SECURITY.md).
 
 ## License
 
-Apache-2.0 — see LICENSE and NOTICE.
+Apache-2.0 — see [LICENSE](LICENSE) and [NOTICE](NOTICE).

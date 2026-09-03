@@ -15,7 +15,7 @@ Matcher throwsCborError([String? substring]) => throwsA(
           substring == null ? anything : contains(substring)),
     );
 
-/// Fixed-seed replacement for the TS fast-check arbitrary: same value space
+/// Fixed-seed replacement for the reference property-test arbitrary: same value space
 /// (uint / bytes / ascii text / bool / array / integer-keyed map / protocol
 /// tags), leaves only past depth 4.
 CborValue randomValue(Random rng, int depth) {
