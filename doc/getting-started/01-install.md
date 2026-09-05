@@ -17,7 +17,7 @@ or, by hand:
 
 ```yaml
 dependencies:
-  era_connect: ^0.1.0
+  era_connect: ^0.2.0
 ```
 
 Requirements: Dart SDK `^3.4.0`. The library is **pure Dart** — no

@@ -196,6 +196,85 @@ EraAccounts buildWallet() {
   return EraAccounts.fromUr(Ur('crypto-multi-accounts', walletCbor));
 }
 
+/// One chain selector as the classifier's hardened clause sees it: the
+/// account path that reaches it, whether its view additionally demands a
+/// 32-byte Ed25519 key, and how it answers when the export carries nothing it
+/// accepts (null, or an empty list). Bitcoin is absent on purpose — `btc()`
+/// is the one selector that reads the path itself, and has its own group.
+typedef ChainSelectorCase = ({
+  AccountChain chain,
+  int purpose,
+  int coinType,
+  bool ed25519,
+  bool Function(EraAccounts accounts) answersEmpty,
+});
+
+final List<ChainSelectorCase> chainSelectorCases = [
+  (
+    chain: AccountChain.evm,
+    purpose: 44,
+    coinType: 60,
+    ed25519: false,
+    answersEmpty: (a) => a.evm() == null,
+  ),
+  (
+    chain: AccountChain.bch,
+    purpose: 44,
+    coinType: 145,
+    ed25519: false,
+    answersEmpty: (a) => a.bch() == null,
+  ),
+  (
+    chain: AccountChain.solana,
+    purpose: 44,
+    coinType: 501,
+    ed25519: true,
+    answersEmpty: (a) => a.solana().isEmpty,
+  ),
+  (
+    chain: AccountChain.tron,
+    purpose: 44,
+    coinType: 195,
+    ed25519: false,
+    answersEmpty: (a) => a.tron() == null,
+  ),
+  (
+    chain: AccountChain.ton,
+    purpose: 44,
+    coinType: 607,
+    ed25519: true,
+    answersEmpty: (a) => a.ton() == null,
+  ),
+  (
+    chain: AccountChain.cardano,
+    purpose: 1852,
+    coinType: 1815,
+    ed25519: true,
+    answersEmpty: (a) => a.cardano() == null,
+  ),
+  (
+    chain: AccountChain.sui,
+    purpose: 44,
+    coinType: 784,
+    ed25519: true,
+    answersEmpty: (a) => a.sui().isEmpty,
+  ),
+  (
+    chain: AccountChain.cosmos,
+    purpose: 44,
+    coinType: 118,
+    ed25519: false,
+    answersEmpty: (a) => a.cosmos() == null,
+  ),
+  (
+    chain: AccountChain.xrp,
+    purpose: 44,
+    coinType: 144,
+    ed25519: false,
+    answersEmpty: (a) => a.xrp() == null,
+  ),
+];
+
 void main() {
   group('address derivation from a linked wallet', () {
     final accounts = buildWallet();
@@ -534,6 +613,485 @@ void main() {
         throwsA(isA<EraSdkError>()
             .having((e) => e.code, 'code', 'malformed-reply')),
       );
+    });
+  });
+
+  // The pull model (`generateKeyDerivationCall`) is answered with an export
+  // whose entry is the FULL signing path — a five-level leaf, not an account.
+  // Classification reads levels 0 and 1 only, so that leaf still classifies as
+  // XRP and `xrp()` wraps it AS THOUGH it were an account: `signingPath` and
+  // `derivePublicKey` then sit two BIP-32 levels below the only key the device
+  // will sign with. `doc/getting-started/02-link-device.md` documents exactly
+  // this and sends the reader to `keys` instead; these tests are what makes
+  // that page's claims checkable rather than remembered.
+  group('a pull-model XRP answer is a leaf, not an account', () {
+    final master = TestHdNode.fromMasterSeed(testSeed);
+    final leafLevels = <(int, bool)>[
+      (44, true),
+      (144, true),
+      (0, true),
+      (0, false),
+      (0, false),
+    ];
+    final leaf = master.derivePath(leafLevels);
+    final accounts = EraAccounts.fromUr(Ur(
+      'crypto-multi-accounts',
+      cborEncode(cbMap([
+        (1, cbUint(master.fingerprint)),
+        (2, cbArray([accountEntry(leaf, leafLevels)])),
+      ])),
+    ));
+
+    test('the leaf classifies as XRP, so xrp() does NOT return null', () {
+      expect(accounts.keys.single.path, "m/44'/144'/0'/0/0");
+      expect(accounts.keys.single.chain, AccountChain.xrp);
+      expect(accounts.xrp(), isNotNull);
+    });
+
+    test('and the view it returns is two levels too deep', () {
+      final view = accounts.xrp()!;
+      expect(view.accountPath, "m/44'/144'/0'/0/0");
+      expect(view.signingPath, "m/44'/144'/0'/0/0/0/0");
+      expect(bytesToHex(view.derivePublicKey(0)),
+          isNot(bytesToHex(leaf.publicKey)));
+      expect(view.deriveAddress(0), isNot(xrpAddressOf(leaf)));
+    });
+
+    test('the documented route reads the signing key itself', () {
+      final key =
+          accounts.keys.firstWhere((k) => k.path == "m/44'/144'/0'/0/0");
+      expect(bytesToHex(key.publicKey!), bytesToHex(leaf.publicKey));
+      expect(
+          derive.xrpAddressFromPublicKey(key.publicKey!), xrpAddressOf(leaf));
+    });
+  });
+
+  // Nine of the ten chain selectors are `_classify(path) == <chain>` and
+  // nothing else, so ONE clause inside the classifier — the first two levels
+  // must both be hardened — is the entire hardened gate for all nine. An
+  // export is hostile input and a `crypto-keypath` can spell a soft level, so
+  // without that clause an entry at `m/44/60'/0'` would come back as THE EVM
+  // account of the linked wallet: a different key, under a path the device
+  // will not sign for. Bitcoin is the tenth and the exception — it checks
+  // hardenedness while selecting, and is pinned in the group below.
+  group('a soft top level is not a chain', () {
+    final master = TestHdNode.fromMasterSeed(testSeed);
+    // The four Ed25519 selectors also require a 32-byte key. Handed a
+    // secp256k1 one they answer empty on the LENGTH and never reach the
+    // clause under test — which is what the positive control catches.
+    final ed25519Key = derive.ed25519ScalarMultBase(BigInt.from(9));
+    final chainCode = sha256(utf8Encode('soft-top-level-cc'));
+
+    EraAccounts walletOf(List<(int, bool)> levels, {required bool ed25519}) {
+      final entry = cbMap([
+        (
+          3,
+          cbBytes(ed25519 ? ed25519Key : master.derivePath(levels).publicKey)
+        ),
+        (4, cbBytes(chainCode)),
+        (
+          6,
+          cbTag(
+            304,
+            cbMap([
+              (1, pathComponents(levels)),
+              (2, cbUint(0x12345678)),
+            ]),
+          )
+        ),
+      ]);
+      return EraAccounts.fromUr(Ur(
+        'crypto-multi-accounts',
+        cborEncode(cbMap([
+          (1, cbUint(master.fingerprint)),
+          (2, cbArray([entry])),
+        ])),
+      ));
+    }
+
+    for (final selector in chainSelectorCases) {
+      test('${selector.chain.name}: neither top level may be soft', () {
+        for (final softLevel in [0, 1]) {
+          final accounts = walletOf(
+            [
+              (selector.purpose, softLevel != 0),
+              (selector.coinType, softLevel != 1),
+              (0, true),
+            ],
+            ed25519: selector.ed25519,
+          );
+          final path = accounts.keys.single.path;
+          expect(accounts.keys.single.chain, AccountChain.unknown,
+              reason: path);
+          expect(selector.answersEmpty(accounts), isTrue, reason: path);
+        }
+
+        // The positive control: the SAME entry with both levels hardened IS
+        // that chain, and its selector answers with it. Without it the two
+        // assertions above would pass just as well on an entry no selector
+        // could ever have accepted.
+        final accounts = walletOf(
+          [
+            (selector.purpose, true),
+            (selector.coinType, true),
+            (0, true),
+          ],
+          ed25519: selector.ed25519,
+        );
+        expect(accounts.keys.single.chain, selector.chain);
+        expect(selector.answersEmpty(accounts), isFalse);
+      });
+    }
+  });
+
+  // The `testnet` flag SELECTS the account (coin type 1'), it does not just
+  // re-spell the mainnet one under a testnet HRP. The exact addresses and
+  // extended keys of every purpose on both networks live in the SHARED
+  // fixture `test/fixtures/parity/accounts-testnet.json` and are asserted by
+  // `accounts_testnet_parity_test.dart`; what is left here is the behaviour
+  // that fixture cannot express — which entry is picked, which asks are
+  // refused outright, and what a coin-type-1' path classifies as.
+  group('Bitcoin: the network selects the account', () {
+    final master = TestHdNode.fromMasterSeed(testSeed);
+
+    /// A three-level account entry with an explicit origin xfp, so that WHICH
+    /// entry a view selected is visible in its xfp alone. Levels are given as
+    /// `(index, hardened)` because the hardened-ness of the first two is part
+    /// of what selection must check.
+    CborValue btcEntry(List<(int, bool)> levels, int xfp) {
+      final node = master.derivePath(levels);
+      return cbMap([
+        (3, cbBytes(node.publicKey)),
+        (4, cbBytes(node.chainCode)),
+        (
+          6,
+          cbTag(
+            304,
+            cbMap([
+              (1, pathComponents(levels)),
+              (2, cbUint(xfp)),
+            ]),
+          )
+        ),
+        (8, cbUint(node.parentFingerprint)),
+      ]);
+    }
+
+    /// `m/<p0>'/<p1>'/0'`, every level hardened — a normal account entry.
+    CborValue account(int p0, int p1, int xfp) =>
+        btcEntry([(p0, true), (p1, true), (0, true)], xfp);
+
+    EraAccounts walletOf(List<CborValue> entries) {
+      return EraAccounts.fromUr(Ur(
+        'crypto-multi-accounts',
+        cborEncode(cbMap([
+          (1, cbUint(master.fingerprint)),
+          (2, cbArray(entries)),
+        ])),
+      ));
+    }
+
+    const purposes = [84, 44, 49, 86];
+
+    /// The xfp given to the entry for [purpose] on each network: `aa0000xx`
+    /// on mainnet, `bb0000xx` on testnet, where `xx` is the purpose in hex
+    /// (84 -> `54`). One glance at an xfp says which entry a view picked.
+    String xfpHex(int purpose, {required bool testnet}) =>
+        '${testnet ? 'bb' : 'aa'}0000'
+        '${purpose.toRadixString(16).padLeft(2, '0')}';
+
+    /// `m/<purpose>'/0'/0'` for each purpose.
+    List<CborValue> mainnetEntries() =>
+        [for (final p in purposes) account(p, 0, 0xaa000000 + p)];
+
+    /// `m/<purpose>'/1'/0'` for each purpose.
+    List<CborValue> testnetEntries() =>
+        [for (final p in purposes) account(p, 1, 0xbb000000 + p)];
+
+    group('an export carrying both networks', () {
+      // Testnet entries come FIRST in the list: a mainnet lookup has to walk
+      // past all four of them to reach its own account.
+      final accounts = walletOf([...testnetEntries(), ...mainnetEntries()]);
+
+      test('btc() selects coin type 0 for every purpose', () {
+        for (final purpose in purposes) {
+          final btc = accounts.btc(purpose: purpose)!;
+          expect(btc.accountPath, "m/$purpose'/0'/0'",
+              reason: 'purpose $purpose path');
+          expect(btc.xfp, xfpHex(purpose, testnet: false),
+              reason: 'purpose $purpose xfp');
+        }
+      });
+
+      test('btc(testnet: true) selects coin type 1 for every purpose', () {
+        for (final purpose in purposes) {
+          final btc = accounts.btc(purpose: purpose, testnet: true)!;
+          expect(btc.accountPath, "m/$purpose'/1'/0'",
+              reason: 'purpose $purpose path');
+          expect(btc.xfp, xfpHex(purpose, testnet: true),
+              reason: 'purpose $purpose xfp');
+        }
+      });
+
+      test('the two networks never share an answer', () {
+        for (final purpose in purposes) {
+          final mainnet = accounts.btc(purpose: purpose)!;
+          final testnet = accounts.btc(purpose: purpose, testnet: true)!;
+          expect(testnet.accountPath, isNot(mainnet.accountPath),
+              reason: 'purpose $purpose path');
+          expect(testnet.xfp, isNot(mainnet.xfp),
+              reason: 'purpose $purpose xfp');
+          expect(testnet.xpub(), isNot(mainnet.xpub()),
+              reason: 'purpose $purpose xpub');
+        }
+      });
+    });
+
+    // Item that used to come for free from the chain classifier: the old
+    // predicate ran `_classify(e.path) == AccountChain.btc`, which bounded
+    // `purpose` to the four BIP values as a side effect. Selecting on a bare
+    // integer lost that bound, and `typedef BtcPurpose = int` lets any int
+    // compile.
+    // The purposes the bound must refuse. The export built for them CARRIES
+    // an account at every one, on BOTH coin types, so widening the bound by a
+    // single value turns one of these asks non-null. Without that the null is
+    // an empty search agreeing with the guard and the test measures nothing.
+    // The same list is used by the TypeScript SDK's suite, value for value.
+    //
+    // -1 is not in it and cannot be: a derivation index is unsigned, so no
+    // export can carry `m/-1'/…`. It gets its own test below — the one
+    // refusal here that no fixture can make real.
+    const foreignPurposes = [0, 1, 43, 45, 48, 60, 85, 87, 1852];
+
+    group('the purpose is bounded to the four BIP values', () {
+      /// `m/<p>'/0'/0'` and `m/<p>'/1'/0'` for every refused purpose, each
+      /// with an xfp that names which entry a leaked view would have picked.
+      List<CborValue> foreignEntries() => [
+            for (final p in foreignPurposes) ...[
+              account(p, 0, 0xcc000000 + p),
+              account(p, 1, 0xdd000000 + p),
+            ],
+          ];
+
+      String foreignXfp(int purpose, {required bool testnet}) =>
+          ((testnet ? 0xdd000000 : 0xcc000000) + purpose)
+              .toRadixString(16)
+              .padLeft(8, '0');
+
+      // An export that really CARRIES the out-of-set accounts, so a null
+      // answer is the guard talking and not an empty search.
+      final accounts = walletOf([
+        ...foreignEntries(),
+        ...mainnetEntries(),
+        ...testnetEntries(),
+      ]);
+
+      test('the out-of-set entries are present and addressable by path', () {
+        final paths = accounts.keys.map((k) => k.path).toList();
+        for (final purpose in foreignPurposes) {
+          for (final testnet in [false, true]) {
+            final path = "m/$purpose'/${testnet ? 1 : 0}'/0'";
+            expect(paths, contains(path), reason: path);
+            expect(accounts.xfpFor(path), foreignXfp(purpose, testnet: testnet),
+                reason: path);
+          }
+        }
+      });
+
+      test('btc() refuses every purpose outside {44, 49, 84, 86}', () {
+        for (final purpose in foreignPurposes) {
+          expect(accounts.btc(purpose: purpose), isNull,
+              reason: 'mainnet, purpose $purpose');
+          expect(accounts.btc(purpose: purpose, testnet: true), isNull,
+              reason: 'testnet, purpose $purpose');
+        }
+      });
+
+      test('and a negative purpose, which no export could carry', () {
+        expect(accounts.btc(purpose: -1), isNull);
+        expect(accounts.btc(purpose: -1, testnet: true), isNull);
+      });
+
+      test('the four supported purposes still resolve on both networks', () {
+        for (final purpose in purposes) {
+          expect(
+              accounts.btc(purpose: purpose)?.accountPath, "m/$purpose'/0'/0'");
+          expect(accounts.btc(purpose: purpose, testnet: true)?.accountPath,
+              "m/$purpose'/1'/0'");
+        }
+      });
+    });
+
+    // A crypto-keypath can express soft levels, and an export is hostile
+    // input. Without the hardened-ness clause an entry at m/84'/1/0' would be
+    // served as a Bitcoin testnet account.
+    group('the first two levels must be hardened', () {
+      test('a soft coin type is not a network', () {
+        final accounts = walletOf([
+          btcEntry([(84, true), (1, false), (0, true)], 0xbb000054),
+          btcEntry([(84, true), (0, false), (0, true)], 0xaa000054),
+        ]);
+        expect(accounts.keys.map((k) => k.path), ["m/84'/1/0'", "m/84'/0/0'"]);
+        expect(accounts.btc(testnet: true), isNull);
+        expect(accounts.btc(), isNull);
+      });
+
+      test('a soft purpose is not a script type', () {
+        final accounts = walletOf([
+          btcEntry([(84, false), (1, true), (0, true)], 0xbb000054),
+          btcEntry([(84, false), (0, true), (0, true)], 0xaa000054),
+        ]);
+        expect(accounts.keys.map((k) => k.path), ["m/84/1'/0'", "m/84/0'/0'"]);
+        expect(accounts.btc(testnet: true), isNull);
+        expect(accounts.btc(), isNull);
+      });
+
+      test('the same levels, hardened, do resolve', () {
+        final accounts = walletOf([account(84, 1, 0xbb000054)]);
+        expect(accounts.btc(testnet: true)?.accountPath, "m/84'/1'/0'");
+      });
+    });
+
+    // A `crypto-keypath` may carry a path of ANY length from one level up,
+    // and the parser keeps it — so an entry shorter than the two levels
+    // selection reads is input this SDK really sees, not a hypothesis.
+    // Reading level 1 of it without a length check is a range error thrown
+    // out of a public method, where every other refusal on this path is a
+    // typed `EraSdkError` or a null the caller can branch on.
+    group('an entry shorter than the levels selection reads', () {
+      /// `m/84'` — one level, so `path[1]` does not exist.
+      CborValue shortEntry(int xfp) => btcEntry([(84, true)], xfp);
+
+      test('is walked past, and the real account still resolves', () {
+        final accounts = walletOf([
+          shortEntry(0xee000054),
+          account(84, 0, 0xaa000054),
+          account(84, 1, 0xbb000054),
+        ]);
+        // It IS a parsed entry sitting ahead of the accounts, not one the
+        // parser dropped: selection really does have to walk past it.
+        expect(accounts.keys.first.path, "m/84'");
+
+        final mainnet = accounts.btc()!;
+        expect(mainnet.accountPath, "m/84'/0'/0'");
+        expect(mainnet.xfp, 'aa000054');
+
+        final testnet = accounts.btc(testnet: true)!;
+        expect(testnet.accountPath, "m/84'/1'/0'");
+        expect(testnet.xfp, 'bb000054');
+      });
+
+      test('and on its own it answers null, on every purpose and network', () {
+        final accounts = walletOf([shortEntry(0xee000054)]);
+        for (final purpose in purposes) {
+          expect(accounts.btc(purpose: purpose), isNull,
+              reason: 'mainnet, purpose $purpose');
+          expect(accounts.btc(purpose: purpose, testnet: true), isNull,
+              reason: 'testnet, purpose $purpose');
+        }
+        // The path is still addressable by name — the entry is refused as an
+        // ACCOUNT, not discarded.
+        expect(accounts.xfpFor("m/84'"), 'ee000054');
+      });
+    });
+
+    test(
+        'a mainnet-only export refuses a testnet ask instead of re-spelling '
+        'the mainnet key', () {
+      final accounts = walletOf(mainnetEntries());
+      final mainnet = accounts.btc()!;
+      // The regression this change exists to prevent: the old predicate
+      // ignored `testnet` when SELECTING, so this call handed back the
+      // MAINNET account and merely re-spelled its key under a testnet HRP.
+      // Both strings below come from one and the same child key, so the
+      // second is the mainnet address's own hash160 wearing a `tb` prefix —
+      // an address on a chain whose coins this account will never hold.
+      final mainnetChild = master.derivePath(
+          [(84, true), (0, true), (0, true), (0, false), (0, false)]).publicKey;
+      expect(derive.btcP2wpkhAddressFromPublicKey(mainnetChild),
+          'bc1qcr8te4kr609gcawutmrza0j4xv80jy8z306fyu');
+      expect(derive.btcP2wpkhAddressFromPublicKey(mainnetChild, 'tb'),
+          'tb1qcr8te4kr609gcawutmrza0j4xv80jy8zmfp6l0');
+      // Selection must fail instead of producing that.
+      final testnetAsk = accounts.btc(testnet: true);
+      expect(testnetAsk, isNull);
+      expect(testnetAsk?.accountPath, isNot(mainnet.accountPath));
+      expect(testnetAsk?.xfp, isNot(mainnet.xfp));
+      expect(testnetAsk?.xpub(), isNot(mainnet.xpub()));
+      for (final purpose in purposes) {
+        expect(accounts.btc(purpose: purpose, testnet: true), isNull,
+            reason: 'purpose $purpose');
+      }
+      // …and the mainnet account is untouched by any of it.
+      expect(mainnet.accountPath, "m/84'/0'/0'");
+      expect(mainnet.deriveAddress(0),
+          'bc1qcr8te4kr609gcawutmrza0j4xv80jy8z306fyu');
+    });
+
+    test('a testnet-only export answers the testnet ask and only that one', () {
+      final accounts = walletOf(testnetEntries());
+      for (final purpose in purposes) {
+        expect(accounts.btc(purpose: purpose), isNull,
+            reason: 'mainnet ask, purpose $purpose');
+      }
+      final btc = accounts.btc(testnet: true)!;
+      expect(btc.accountPath, "m/84'/1'/0'");
+      expect(btc.xfp, 'bb000054'); // 0xbb000000 | 84
+      // The path is still addressable by name, whatever it classifies as.
+      expect(accounts.xfpFor("m/84'/1'/0'"), 'bb000054');
+    });
+
+    test('classify leaves a coin-type-1 path unknown, on purpose', () {
+      // SLIP-44 gives coin type 1 to "Testnet (all coins)", so m/84'/1'/0' is
+      // as much a Litecoin or Dogecoin testnet account as a Bitcoin one —
+      // PsbtCoin admits those chains. Attribution reads the path alone, with
+      // no caller intent to disambiguate it, so it must stay `unknown`;
+      // btc(testnet: true) may resolve the same entry only because the caller
+      // named the chain.
+      final accounts = walletOf(testnetEntries());
+      for (final key in accounts.keys) {
+        expect(key.chain, AccountChain.unknown, reason: key.path);
+      }
+      expect(accounts.btc(testnet: true), isNotNull);
+      // The mainnet coin type is what earns the Bitcoin label.
+      final mainnet = walletOf(mainnetEntries());
+      for (final key in mainnet.keys) {
+        expect(key.chain, AccountChain.btc, reason: key.path);
+      }
+    });
+
+    test('a taproot view refuses addresses by code AND message', () {
+      final accounts = walletOf([...mainnetEntries(), ...testnetEntries()]);
+      for (final testnet in [false, true]) {
+        final btc = accounts.btc(purpose: 86, testnet: testnet)!;
+        expect(
+          () => btc.deriveAddress(0),
+          throwsA(isA<EraSdkError>()
+              .having((e) => e.code, 'code', 'invalid-props')
+              .having(
+                  (e) => e.message,
+                  'message',
+                  'taproot addresses need the BIP-341 output-key tweak; '
+                      'derive them from xpub() with your Bitcoin library')),
+          reason: 'testnet: $testnet',
+        );
+      }
+    });
+
+    test('zpub stays a BIP-84 form on both networks, by code AND message', () {
+      final accounts = walletOf([...mainnetEntries(), ...testnetEntries()]);
+      for (final testnet in [false, true]) {
+        for (final purpose in [44, 49, 86]) {
+          expect(
+            () => accounts.btc(purpose: purpose, testnet: testnet)!.zpub(),
+            throwsA(isA<EraSdkError>()
+                .having((e) => e.code, 'code', 'invalid-props')
+                .having((e) => e.message, 'message',
+                    'zpub is the SLIP-132 form of the BIP-84 account only')),
+            reason: 'purpose $purpose, testnet: $testnet',
+          );
+        }
+      }
     });
   });
 

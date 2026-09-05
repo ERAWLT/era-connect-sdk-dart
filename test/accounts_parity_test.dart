@@ -12,9 +12,13 @@ import 'package:era_connect/src/ur/ur.dart';
 import 'package:test/test.dart';
 
 /// Parity against the reference vectors: `test/fixtures/parity/accounts.json`
-/// dumps EVERY view output of the reference `parseAccounts` over a
+/// dumps the view outputs of the reference `parseAccounts` over a
 /// generator-built wallet (fixed synthetic inputs, the standard test seed);
-/// the Dart port must reproduce every value and refuse every tampered reply.
+/// the Dart port must reproduce every value in it and refuse every tampered
+/// reply. It is a dump PLUS one hand edit, recorded in the file's own note:
+/// three testnet expectations were deleted when `btc(testnet:)` became an
+/// account selector, and this wallet carries no coin-type-1 account to
+/// replace them with.
 void main() {
   final fixture = jsonDecode(
     File('test/fixtures/parity/accounts.json').readAsStringSync(),
@@ -105,8 +109,9 @@ void main() {
       expect(btc.deriveAddress(0), receive[0]);
       expect(btc.deriveAddress(1), receive[1]);
       expect(btc.deriveAddress(0, change: true), want['change0']);
-      expect(accounts.btc(testnet: true)!.deriveAddress(0),
-          want['testnetReceive0']);
+      // This export carries no coin-type-1' account, so there is no testnet
+      // BIP-84 account to return.
+      expect(accounts.btc(testnet: true), isNull);
     });
 
     test('btc purpose 44 (legacy P2PKH)', () {
@@ -114,8 +119,9 @@ void main() {
       final btc = accounts.btc(purpose: 44)!;
       expect(btc.xfp, want['xfp']);
       expect(btc.deriveAddress(0), want['address0']);
-      expect(accounts.btc(purpose: 44, testnet: true)!.deriveAddress(0),
-          want['testnetAddress0']);
+      // This export carries no coin-type-1' account, so there is no testnet
+      // legacy account to return.
+      expect(accounts.btc(purpose: 44, testnet: true), isNull);
     });
 
     test('btc purpose 49 (nested segwit)', () {
@@ -123,8 +129,9 @@ void main() {
       final btc = accounts.btc(purpose: 49)!;
       expect(btc.xfp, want['xfp']);
       expect(btc.deriveAddress(0), want['address0']);
-      expect(accounts.btc(purpose: 49, testnet: true)!.deriveAddress(0),
-          want['testnetAddress0']);
+      // This export carries no coin-type-1' account, so there is no testnet
+      // nested-segwit account to return.
+      expect(accounts.btc(purpose: 49, testnet: true), isNull);
     });
 
     test('btc purpose 86 (taproot: xpub only, addresses refused)', () {
@@ -143,6 +150,18 @@ void main() {
         throwsA(
             isA<EraSdkError>().having((e) => e.code, 'code', 'invalid-props')),
       );
+    });
+
+    test('btc refuses a purpose outside {44, 49, 84, 86}', () {
+      // This export CARRIES m/0'/0'/0' — it is in `xfpFor` and it classifies
+      // as unknown — so a null here is the purpose bound talking rather than
+      // an empty search. Without the bound the view resolves that entry and
+      // serves a plausible xpub() for it, refusing only later at the first
+      // address.
+      expect(wallet['xfpFor'], contains("m/0'/0'/0'"));
+      expect(accounts.xfpFor("m/0'/0'/0'"), isNotEmpty);
+      expect(accounts.btc(purpose: 0), isNull);
+      expect(accounts.btc(purpose: 0, testnet: true), isNull);
     });
 
     test('bch (CashAddr forms and the sign-request public key)', () {

@@ -34,6 +34,14 @@ payload. It is not a hardening step; it is the anti-replay mechanism.
 import 'package:era_connect/verify.dart';
 ```
 
+That one import carries the helpers, their argument objects, and every type
+those objects DECLARE — `EvmDataType` and `TonDataType` for the `dataType`
+fields, `CardanoWitness` for `witnesses`, `TronLatestBlock` and `SignedTronTx`
+for the Tron args — plus `EraSdkError`, which the two parsers it exposes
+(`parsePsbt`, `bocRootHash`) throw. Nothing on a verification path needs a
+second import; the request and reply objects around it come from the chain
+module, as always.
+
 Every helper returns a `VerifyResult` and never throws on a mismatch. It is
 sealed, with three cases:
 
