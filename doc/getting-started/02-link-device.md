@@ -18,8 +18,10 @@ import 'package:era_connect/era_connect.dart';
 
 final era = EraConnect(const EraConnectConfig(origin: 'MyWallet'));
 
-final scanner = era.scanner(const UrScannerOptions(
-  expectedTypes: ['crypto-multi-accounts', 'crypto-account', 'crypto-hdkey'],
+// walletUrTypes is exactly those three; pin the set rather than a literal so
+// a link type added to the SDK does not become a rejected frame in your app.
+final scanner = era.scanner(UrScannerOptions(
+  expectedTypes: walletUrTypes.toList(),
 ));
 
 // One call per decoded camera frame. Never throws — see page 4.
@@ -70,7 +72,7 @@ the device wrote next to it:
 ```dart
 for (final key in accounts.keys) {
   key.chain;        // AccountChain.evm | btc | bch | solana | tron | ton
-                    //   | cardano | sui | cosmos | unknown
+                    //   | cardano | sui | cosmos | xrp | unknown
   key.path;         // "m/44'/60'/0'"
   key.xfp;          // the fingerprint a sign request must carry for this account
   key.publicKey;    // 33-byte secp256k1 or 32-byte Ed25519; null if omitted
@@ -125,20 +127,80 @@ btc.zpub();                                       // SLIP-132, BIP-84 only
 accounts.btc(purpose: 44);                        // legacy P2PKH, '1…'
 accounts.btc(purpose: 49);                        // nested segwit, '3…'
 accounts.btc(purpose: 86);                        // taproot account
-accounts.btc(testnet: true);                      // 'tb1…' / testnet P2PKH
 ```
 
-Two edges worth knowing before you hit them:
+`purpose` is bounded to those four values. Any other integer returns `null`
+rather than a view — an arbitrary purpose has no script type and no address
+encoding, so a view over it could hand you a plausible-looking `xpub()` and
+refuse only later, at the first address.
+
+Three edges worth knowing before you hit them:
 
 - `deriveAddress` on a **purpose 86** view throws `invalid-props`. Taproot
   addresses need the BIP-341 output-key tweak, which is Bitcoin-library work,
   not BIP-32 work — take `xpub()` and derive them with your own stack.
 - `zpub()` on any purpose but 84 throws `invalid-props`; SLIP-132 `zpub` is
   defined for the BIP-84 key alone.
+- An entry only counts as a Bitcoin account when its purpose AND its coin type
+  are **hardened**. A `crypto-keypath` can spell a soft level, and
+  `m/84'/1/0'` is not a testnet account — it is a different key entirely.
 
 Litecoin, Dogecoin and Dash sign through the same `btc` module, but their
 accounts live under their own coin types — build those PSBTs with the coin's
 own paths and derive their addresses with your own library.
+
+#### `testnet` picks an account; it does not re-spell one
+
+`testnet: true` changes **which entry** the view wraps: it looks for an entry
+whose first two levels are `m/<purpose>'/1'/…` — SLIP-44's coin type 1,
+"Testnet (all coins)" — instead of `m/<purpose>'/0'/…`. Everything the view
+then reports comes from that entry, so the account path, the `xfp` a sign
+request must carry, the addresses and the extended key all describe one and
+the same key.
+
+Only those two levels are examined, on either network, and the FIRST entry
+that matches wins. An export whose only BIP-84 testnet entry is
+`m/84'/1'/2'` answers with that one, and a five-level leaf such as
+`m/84'/1'/0'/0/0` matches too — read `accountPath` rather than assuming a
+`0'` account index, and derive from the path the view reports.
+
+```dart
+final btc = accounts.btc(testnet: true);          // null if the export has none
+btc!.accountPath;                                 // e.g. "m/84'/1'/0'"
+btc.deriveAddress(0);                             // 'tb1…'
+btc.xpub();                                       // 'tpub…'
+btc.zpub();                                       // 'vpub…' — SLIP-132 BIP-84
+```
+
+| Purpose | Address | `xpub()` | `zpub()` |
+|---|---|---|---|
+| 84 | `tb1q…` | `tpub…` | `vpub…` |
+| 49 | `2…` | `tpub…` | throws `invalid-props` |
+| 44 | `m…` / `n…` | `tpub…` | throws `invalid-props` |
+| 86 | `deriveAddress` throws | `tpub…` | throws `invalid-props` |
+
+`zpub()` keeps its name and its rule — BIP-84 only — and returns SLIP-132's
+BIP-84 **testnet** key, whose version bytes spell `vpub`.
+
+**There is no fallback between the two networks.** An export that carries no
+coin-type-1' account returns `null`, and asking for mainnet on a testnet-only
+export returns `null` the same way. A view that answered a testnet request
+with the mainnet key under a `tb` prefix would be a confident wrong answer:
+the address would be for a chain whose coins that account will never hold,
+while the path and the `xfp` inside the sign request stayed mainnet.
+
+**ERA wallets export Bitcoin accounts at coin type 0' only**, so
+`accounts.btc(testnet: true)` returns `null` for every current ERA export —
+handle the null rather than assuming a testnet account is there. The parameter
+stays because the export format carries coin-type-1' accounts and other wallet
+profiles do export them.
+
+One more thing the table above does not show: a coin-type-1' entry classifies
+as `AccountChain.unknown` in `accounts.keys`, not as `btc`. Coin type 1 is
+"Testnet (**all** coins)", so `m/84'/1'/0'` is as much a Litecoin testnet
+account as a Bitcoin one, and classification reads the path alone with nothing
+to break the tie. `btc(testnet: true)` may resolve that same entry only
+because the caller named the chain.
 
 ### Bitcoin Cash
 
@@ -218,31 +280,68 @@ cardano.deriveKey(2, 0);   // stake vkey
 cardano.pathFor(0, 0);     // "m/1852'/1815'/0'/0/0"
 ```
 
-### Cosmos and XRP
+### Cosmos
 
-Neither has a dedicated view, and both are still fully signable — they just
-read their account material out of `keys`.
-
-**Cosmos** entries classify as `AccountChain.cosmos` (`m/44'/118'`). Take the
-path and the xfp from the entry and hand the bech32 encoding to your zone's
-tooling, because the human-readable prefix is per zone (`cosmos`, `osmo`,
-`inj`, …) and no single answer exists in an SDK:
+`m/44'/118'/0'`, one secp256k1 key, addresses at `0/index`. The bech32 prefix
+is a property of the **zone**, not of the key — one key spends as `cosmos1…`,
+`osmo1…` and `juno1…` — so there is no correct default and `deriveAddress`
+requires one:
 
 ```dart
-final cosmos = accounts.keys
-    .firstWhere((k) => k.chain == AccountChain.cosmos);
-cosmos.path;       // "m/44'/118'/0'"
-cosmos.xfp;
-cosmos.publicKey;  // encode to <prefix>1… with your Cosmos library
+final cosmos = accounts.cosmos()!;
+cosmos.accountPath;                          // "m/44'/118'/0'"
+cosmos.pathFor(0);                           // "m/44'/118'/0'/0/0"
+cosmos.derivePublicKey(0);                   // 33 compressed bytes
+cosmos.deriveAddress(0, prefix: 'osmo');     // 'osmo1…'
 ```
 
-**XRP** is simpler and stricter: the device always signs with
-`m/44'/144'/0'/0/0` and nothing else. A transaction whose `SigningPubKey` is
-not that key's public key is invalid — the ledger will reject it, and so will
-the SDK's own request gate. Coin type 144 is not one the classifier maps, so
-if the export carries it, it arrives as `AccountChain.unknown` with its path
-and key intact. If it does not, ask for it explicitly — which is the next
-section.
+Only `m/44'/118'` classifies as Cosmos. A zone with a coin type of its own —
+Terra's 330, Kava's 459, Secret's 529 — comes back from `cosmos()` as null and
+sits in `keys` as `AccountChain.unknown`; match it on `path` and derive with
+your own BIP-32 library plus `cosmosAddressFromPublicKey`.
+
+Ethermint zones (Injective, Evmos, Dymension) are not here at all: they sign
+with `m/44'/60'` keys, so they come back as the **EVM** account.
+
+### XRP
+
+Stricter than the rest: the device signs with `m/44'/144'/0'/0/0` and nothing
+else. A transaction whose `SigningPubKey` is not that key's public key is
+invalid — the ledger will reject it, and so will the SDK's own request gate.
+
+```dart
+final xrp = accounts.xrp()!;         // the ACCOUNT at "m/44'/144'/0'"
+xrp.signingPath;                     // "m/44'/144'/0'/0/0" — the only one
+bytesToHex(xrp.derivePublicKey(0));  // what SigningPubKey must carry
+```
+
+That is the export that volunteers the **account**. Most sync screens do not
+volunteer coin type 144 at all, in which case `xrp()` returns null and you ask
+for the key explicitly instead — which is the next section.
+
+Read that answer with care: it names the **full signing path**, so its entry
+is the leaf key rather than an account — and classification reads the first
+two path levels only, so `m/44'/144'/0'/0/0` still classifies as XRP and
+`xrp()` wraps it as though it were an account:
+
+```dart
+// After a key-derivation call for "m/44'/144'/0'/0/0":
+final view = accounts.xrp()!;  // NOT null — and not what you want
+view.accountPath;              // "m/44'/144'/0'/0/0" — the leaf, treated as an account
+view.signingPath;              // "m/44'/144'/0'/0/0/0/0" — two levels too deep
+view.derivePublicKey(0);       // a grandchild of the signing key, not the key
+```
+
+So over a pull-model answer, skip the view: take the entry out of `keys` by
+path and read `publicKey` directly.
+
+```dart
+final key = accounts.keys.firstWhere((k) => k.path == "m/44'/144'/0'/0/0");
+final signingPubKey = bytesToHex(key.publicKey!);  // what SigningPubKey carries
+```
+
+A transaction built from the view's key instead would carry a `SigningPubKey`
+the device never signs with, and the ledger would reject the result.
 
 ## Asking for specific derivations (the pull model)
 

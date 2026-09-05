@@ -25,12 +25,7 @@ the field that has to name the device's key, in hex, before you send the
 request. Get the key once at link time and keep it.
 
 ```dart
-import 'dart:typed_data';
-
 import 'package:era_connect/era_connect.dart';
-
-String hex(Uint8List bytes) =>
-    bytes.map((b) => b.toRadixString(16).padLeft(2, '0')).join();
 
 /// Ask the device for the XRP key explicitly, if your wallet export did not
 /// carry it: display `call.toAnimated()`, scan the account export back.
@@ -43,14 +38,18 @@ HardwareCallRequest requestXrpKey(EraConnect era) {
   ));
 }
 
-/// The path is not one of the families this SDK classifies, so its
-/// `AccountKey.chain` is `AccountChain.unknown` — match on `path`.
+/// The answer names the FULL signing path, so its entry is the leaf key, not
+/// an account to derive children from — match on `path` and read the key.
 String signingPubKeyOf(EraAccounts accounts) {
   final key = accounts.keys
       .firstWhere((k) => k.path == "m/44'/144'/0'/0/0");
-  return hex(key.publicKey!); // 33-byte compressed secp256k1
+  return bytesToHex(key.publicKey!); // 33-byte compressed secp256k1
 }
 ```
+
+An export that volunteers the **account** at `m/44'/144'/0'` instead is what
+`accounts.xrp()` wraps: `signingPath` names the same `0/0` key and
+`derivePublicKey(0)` produces it.
 
 ## 1. Build the request
 

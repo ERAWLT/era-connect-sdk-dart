@@ -50,14 +50,16 @@ export 'src/chains/shared.dart'
         EraConnectConfig,
         ExpectedReply,
         SignRequest,
+        defaultOrigin,
         resolveContext;
 export 'src/chains/solana.dart';
 export 'src/chains/sui.dart';
 export 'src/chains/ton.dart';
 export 'src/chains/tron.dart';
 export 'src/chains/xrp.dart';
+export 'src/core/bytes.dart' show bytesToHex, hexToBytes;
 export 'src/core/errors.dart';
-export 'src/core/rand.dart' show RandomBytesFn;
+export 'src/core/rand.dart' show RandomBytesFn, randomRequestId, uuidStringify;
 export 'src/hardware_call/key_derivation.dart'
     show
         DerivationAlgorithm,
@@ -67,9 +69,10 @@ export 'src/hardware_call/key_derivation.dart'
         KeyDerivationSchema;
 export 'src/qr/animated_ur.dart';
 export 'src/raw.dart';
-export 'src/registry/keypath.dart' show PathLevel, formatPath, parsePath;
+export 'src/registry/keypath.dart'
+    show PathLevel, formatPath, parsePath, pathEquals;
 export 'src/registry/multi_accounts.dart'
-    show RawAccountEntry, RawMultiAccounts;
+    show RawAccountEntry, RawMultiAccounts, parseMultiAccountsUr, walletUrTypes;
 export 'src/scan/ur_scanner.dart';
 export 'src/device_profile.dart';
 export 'src/ur/limits.dart' show UrLimits;

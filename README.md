@@ -35,8 +35,9 @@ import 'package:era_connect/era_connect.dart';
 final era = EraConnect(EraConnectConfig(origin: 'MyWallet')); // shown on device
 
 // 1. LINK — scan the device's "connect" QR once.
+// walletUrTypes pins every shape a wallet export can arrive in.
 final scanner = era.scanner(
-    UrScannerOptions(expectedTypes: ['crypto-multi-accounts']));
+    UrScannerOptions(expectedTypes: walletUrTypes.toList()));
 // feed camera frames: scanner.receivePart(text) until scanner.isComplete
 final accounts = era.parseAccounts(scanner.result());
 

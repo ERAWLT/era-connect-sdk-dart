@@ -51,8 +51,17 @@ re-serialisation.
 
 The prefix is a property of the zone, not of the key: one key produces
 `cosmos1…`, `osmo1…` and `juno1…` addresses from the same
-`ripemd160(sha256(compressed pubkey))` payload. Assemble the bech32 with your
-Cosmos tooling; this SDK derives no Cosmos addresses.
+`ripemd160(sha256(compressed pubkey))` payload. So the SDK derives the
+address but never guesses the prefix — you name it per call:
+
+```dart
+final cosmos = accounts.cosmos()!;            // m/44'/118'/0'
+cosmos.deriveAddress(0, prefix: 'cosmos');    // 'cosmos1…'
+cosmos.deriveAddress(0, prefix: 'osmo');      // 'osmo1…' — the same key
+```
+
+`cosmosAddressFromPublicKey(publicKey33, prefix)` is exported from the root
+library too, for a compressed key you derived some other way.
 
 ## 1. Build the request (vanilla zones)
 
@@ -72,9 +81,9 @@ On the wire: `{1: 37(<16 raw bytes>), 2: signData, 3: dataType,
 4: [304(keypath)], 5: [address], 6: origin}` — keypath and address each inside
 a one-element array.
 
-The linked wallet has no dedicated Cosmos view (there is nothing to derive that
-Cosmos tooling does not already do), so take the account entry out of
-`accounts.keys`:
+`accounts.cosmos()` is the linked account, and it derives everything a
+request needs — the signing path, the fingerprint, the child key and the
+bech32 address under the zone's prefix:
 
 ```dart
 import 'dart:typed_data';
@@ -85,29 +94,62 @@ SignRequest<CosmosSignatureResult> buildCosmosTx(
   EraConnect era,
   EraAccounts accounts,
   Uint8List signDoc,
-  String bech32Address,
+  String prefix, // 'cosmos', 'osmo', 'celestia', …
 ) {
-  final entry = accounts.keys
-      .firstWhere((key) => key.chain == AccountChain.cosmos); // m/44'/118'/0'
+  final cosmos = accounts.cosmos()!; // m/44'/118'/0'
   return era.cosmos.generateSignRequest(CosmosSignRequestProps(
     signData: signDoc,
     dataType: CosmosDataType.direct,
-    path: '${entry.path}/0/0', // account path + change/index
-    xfp: entry.xfp,
-    address: bech32Address,
+    path: cosmos.pathFor(0), // "m/44'/118'/0'/0/0"
+    xfp: cosmos.xfp,
+    address: cosmos.deriveAddress(0, prefix: prefix),
   ));
 }
 ```
 
-`AccountKey` also carries `publicKey` and `chainCode` for the account level,
-which is what your BIP-32 library needs to derive the `0/index` child key
-locally.
+`cosmos()` and `AccountChain.cosmos` both mean `m/44'/118'` and nothing else.
+An account exported under another coin type — Terra's 330, Kava's 459,
+Secret's 529 — is not a family this SDK classifies: `cosmos()` returns null
+and the entry's `chain` reads `AccountChain.unknown`. Take those out of
+`accounts.keys` by path, derive the `0/index` child with your own BIP-32
+library from the entry's `publicKey` + `chainCode`, and hand the result to
+`cosmosAddressFromPublicKey`:
 
-`AccountChain.cosmos` classifies `m/44'/118'` only. An account exported under
-another coin type — Terra's 330, Kava's 459, Secret's 529 — is not a family
-this SDK classifies, so its `chain` reads `AccountChain.unknown`; match those
-entries on `path`, and use `accounts.xfpFor(accountPath)` for the fingerprint
-(it throws `account-not-found` rather than returning a silent zero).
+```dart
+// Terra, m/44'/330' — the same key system under a coin type this SDK does
+// not classify, so every step is explicit.
+
+// 1. take the entry out of `keys` by path.
+final entry = accounts.keys.firstWhere((k) => k.path == "m/44'/330'/0'");
+final xfp = accounts.xfpFor(entry.path); // throws, never a silent zero
+
+// 2. derive the 0/index child with YOUR BIP-32 library, from the account
+//    key material the export carries. `bip32` here is whatever package you
+//    already use; this SDK derives children only for families it classifies.
+final child = bip32
+    .fromPublicKey(entry.publicKey!, entry.chainCode!)
+    .derive(0)
+    .derive(index)
+    .publicKey; // 33 compressed bytes
+
+// 3. hand that to the address helper with the zone's own prefix.
+final address = cosmosAddressFromPublicKey(child, 'terra');
+
+final request = era.cosmos.generateSignRequest(CosmosSignRequestProps(
+  signData: signDoc,
+  dataType: CosmosDataType.direct,
+  path: '${entry.path}/0/$index',
+  xfp: xfp,
+  address: address,
+));
+```
+
+`cosmosAddressFromPublicKey` comes from the root library, and works for any
+compressed secp256k1 key — the prefix is the only thing that varies between
+zones.
+
+`xfpFor` throws `account-not-found` rather than returning a zero fingerprint,
+which would produce a request the device refuses with no explanation.
 
 Display with `request.toAnimated()`: 180 payload bytes per fragment (~200 on
 the wire) every 125 ms, 8 fps (`DeviceProfile.phoneToDevice`).
@@ -203,7 +245,7 @@ import 'package:era_connect/verify.dart';
 void guardCosmos(
   Uint8List signDoc,
   CosmosSignatureResult reply,
-  Uint8List accountPublicKey, // 33-byte compressed, from your derivation
+  Uint8List accountPublicKey, // 33 compressed bytes: cosmos.derivePublicKey(0)
   bool ethermint,
 ) {
   final verdict = verifyCosmosSignature(VerifyCosmosSignatureArgs(

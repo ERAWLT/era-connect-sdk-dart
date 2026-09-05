@@ -12,7 +12,7 @@ void main() {
   // 1. LINK — the user shows the device's "connect" QR; you scan it.
   //    Feed camera frames into a scanner until it completes:
   //      final scanner = era.scanner(
-  //        UrScannerOptions(expectedTypes: ['crypto-multi-accounts']));
+  //        UrScannerOptions(expectedTypes: walletUrTypes.toList()));
   //      scanner.receivePart(frameText); // repeat per camera frame
   //      final accounts = era.parseAccounts(scanner.result());
   //    Then derive addresses locally, no device round-trip:

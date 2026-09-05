@@ -9,6 +9,7 @@ export 'src/chains/shared.dart'
         EraConnectConfig,
         ExpectedReply,
         SignRequest,
+        defaultOrigin,
         resolveContext;
 export 'src/core/errors.dart';
 export 'src/qr/animated_ur.dart';

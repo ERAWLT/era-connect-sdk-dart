@@ -11,7 +11,16 @@ enum AccountChain {
   /// `m/44'/60'` — every EVM network.
   evm,
 
-  /// `m/84'|49'|44'|86'/0'` — Bitcoin, all script types.
+  /// `m/84'|49'|44'|86'/0'` — Bitcoin MAINNET, all script types.
+  ///
+  /// Coin type 1' is deliberately NOT classified as Bitcoin, and widening
+  /// this would be a mistake: SLIP-44 assigns coin type 1 to "Testnet (all
+  /// coins)", so `m/84'/1'/0'` is as much a Litecoin or Dogecoin testnet
+  /// account as a Bitcoin one — this SDK's own `PsbtCoin` admits those
+  /// chains. Classification reads the path ALONE, with no caller intent to
+  /// disambiguate it, so a coin-type-1' entry stays [unknown].
+  /// `EraAccounts.btc(testnet: true)` may resolve the very same entry only
+  /// because the caller named the chain.
   btc,
 
   /// `m/44'/145'` — Bitcoin Cash.
@@ -169,7 +178,24 @@ class EvmAccountView {
 }
 
 /// The BIP purpose values a Bitcoin export may carry (44, 49, 84 or 86).
+///
+/// Dart has no closed integer type, so this alias names the intent while
+/// [_btcPurposes] is what actually bounds it: [EraAccounts.btc] selects an
+/// account for these four values and returns null for anything else.
 typedef BtcPurpose = int;
+
+/// The only purposes [EraAccounts.btc] will resolve an account for. A purpose
+/// outside this set has no script type, no address encoding and no SLIP-132
+/// form, so there is nothing a view over it could honestly answer.
+const Set<BtcPurpose> _btcPurposes = {44, 49, 84, 86};
+
+/// Whether [entry] is a TESTNET account, read off its coin type. SLIP-44
+/// gives coin type 1 to "Testnet (all coins)"; every other coin type a
+/// Bitcoin view can wrap is a mainnet account.
+bool _isTestnetAccount(RawAccountEntry entry) =>
+    entry.path.length >= 2 &&
+    entry.path[1].hardened &&
+    entry.path[1].index == 1;
 
 /// Bitcoin view over one exported account. The default is the BIP-84
 /// native-segwit account; pass `purpose` to reach the other script types the
@@ -178,7 +204,13 @@ typedef BtcPurpose = int;
 /// firmware: 2.1.0+ signs 44/49/84 and refuses Taproot, older firmware signs
 /// legacy P2PKH alone.
 class BtcAccountView {
-  BtcAccountView(this._entry, this._testnet, this.purpose, this._resolvedXfp);
+  /// Wraps one selected account. The NETWORK is not a parameter: it is read
+  /// off [entry]'s own coin type, so a mainnet entry can never be dressed as
+  /// a testnet account — which is precisely the confident wrong answer this
+  /// view used to be able to produce.
+  BtcAccountView(RawAccountEntry entry, this.purpose, this._resolvedXfp)
+      : _entry = entry,
+        _testnet = _isTestnetAccount(entry);
 
   final RawAccountEntry _entry;
   final bool _testnet;
@@ -225,10 +257,16 @@ class BtcAccountView {
     }
   }
 
-  /// The account-level BIP-32 extended public key.
-  String xpub() => _extendedKeyOf(_entry);
+  /// The account-level BIP-32 extended public key: `xpub…` on mainnet,
+  /// `tpub…` on testnet — the version bytes follow the account this view
+  /// actually selected, never the caller's expectation.
+  String xpub() => _extendedKeyOf(
+      _entry, _testnet ? derive.tpubVersion : derive.xpubVersion);
 
-  /// SLIP-132 zpub form of the BIP-84 key, for tools that require it.
+  /// SLIP-132 zpub form of the BIP-84 key, for tools that require it. On
+  /// testnet this returns the `vpub…` form, which is SLIP-132's BIP-84
+  /// testnet key — same purpose, same account, testnet version bytes.
+  /// Refuses any purpose other than 84 on both networks.
   String zpub() {
     if (purpose != 84) {
       throw EraSdkError(
@@ -236,7 +274,8 @@ class BtcAccountView {
         'zpub is the SLIP-132 form of the BIP-84 account only',
       );
     }
-    return _extendedKeyOf(_entry, derive.zpubVersion);
+    return _extendedKeyOf(
+        _entry, _testnet ? derive.vpubVersion : derive.zpubVersion);
   }
 }
 
@@ -565,14 +604,38 @@ class EraAccounts {
   /// pass `purpose: 44` for legacy P2PKH, 49 for nested segwit, 86 for
   /// taproot — if the export carries them. See [BtcAccountView] for which
   /// script types can sign messages on which firmware.
+  ///
+  /// [purpose] is bounded to {44, 49, 84, 86}. Any other value returns null
+  /// rather than a view: an arbitrary purpose has no script type and no
+  /// address encoding, so a view over it could serve an `xpub()` that looks
+  /// plausible and refuse only later, at the first address.
+  ///
+  /// [testnet] SELECTS the account: it looks for the FIRST entry whose first
+  /// two levels are `m/<purpose>'/1'/…` rather than `m/<purpose>'/0'/…`,
+  /// and the address encoding, the account path, the xfp and the extended
+  /// key all follow that entry. Levels below the coin type are not examined,
+  /// so an export whose only BIP-84 testnet entry is `m/84'/1'/2'` answers
+  /// with that one. There is no fallback between the two networks — asking
+  /// for an account the export does not carry returns null, because
+  /// returning the other network's key under a testnet address would be a
+  /// confident wrong answer.
+  ///
+  /// ERA firmware exports Bitcoin accounts at coin type 0' only, so
+  /// `btc(testnet: true)` returns null for a current ERA wallet export. The
+  /// parameter is here because the export format carries coin-type-1'
+  /// accounts and other wallet profiles do export them.
   BtcAccountView? btc({bool testnet = false, BtcPurpose purpose = 84}) {
+    if (!_btcPurposes.contains(purpose)) return null;
+    final coinType = testnet ? 1 : 0;
     final entry = _find((e) =>
-        _classify(e.path) == AccountChain.btc &&
-        e.path.isNotEmpty &&
-        e.path[0].index == purpose);
+        e.path.length >= 2 &&
+        e.path[0].hardened &&
+        e.path[1].hardened &&
+        e.path[0].index == purpose &&
+        e.path[1].index == coinType);
     return entry == null
         ? null
-        : BtcAccountView(entry, testnet, purpose, _resolveXfp(entry));
+        : BtcAccountView(entry, purpose, _resolveXfp(entry));
   }
 
   /// The Tron account, if the export carries one.

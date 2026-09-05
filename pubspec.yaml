@@ -3,7 +3,7 @@ description: >-
   Air-gapped ERA hardware wallet SDK: UR/QR linking and signing for EVM,
   Bitcoin (+ LTC/DOGE/DASH/BCH), Solana, Tron, TON, Cardano, Sui, Cosmos
   and XRP. Headless, zero-I/O.
-version: 0.1.0
+version: 0.2.0
 repository: https://github.com/ERAWLT/era-connect-sdk-dart
 topics: [hardware-wallet, air-gap, qr, blockchain, wallet]
 

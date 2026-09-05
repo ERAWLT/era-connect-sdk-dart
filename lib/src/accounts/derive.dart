@@ -163,8 +163,14 @@ String solanaAddressFromPublicKey(Uint8List publicKey32) {
 /// BIP-32 mainnet public version bytes (`xpub`).
 const int xpubVersion = 0x0488b21e;
 
+/// BIP-32 testnet public version bytes (`tpub`).
+const int tpubVersion = 0x043587cf;
+
 /// SLIP-132, BIP-84 P2WPKH version bytes (`zpub`).
 const int zpubVersion = 0x04b24746;
+
+/// SLIP-132, BIP-84 P2WPKH testnet version bytes (`vpub`).
+const int vpubVersion = 0x045f1cf6;
 
 /// BIP-32 extended public key serialization.
 String serializeExtendedPublicKey({

@@ -14,6 +14,72 @@ share nothing but the module.
 Bitcoin Cash does **not** ride this path. Its consensus sighash needs an
 envelope of its own — see [bch.md](bch.md).
 
+## Accounts: purpose and network
+
+Both flows start from a linked account, and `EraAccounts.btc()` is how you
+select one. Two axes: the BIP **purpose** (the script type) and the
+**network**.
+
+```dart
+final btc = accounts.btc()!;                 // purpose 84, mainnet — the default
+accounts.btc(purpose: 44);                   // legacy P2PKH, '1…'
+accounts.btc(purpose: 49);                   // nested segwit, '3…'
+accounts.btc(purpose: 86);                   // taproot account
+accounts.btc(testnet: true);                 // BIP-84 testnet
+accounts.btc(purpose: 49, testnet: true);    // any purpose, either network
+```
+
+`purpose` is bounded to **44, 49, 84 and 86**. Any other integer returns
+`null` rather than a view: an arbitrary purpose has no script type and no
+address encoding, so a view over it could serve a plausible-looking `xpub()`
+and refuse only later, at the first address.
+
+### `testnet` selects an account, it does not re-spell one
+
+`testnet: true` looks for an entry whose first two levels are
+`m/<purpose>'/1'/…` — SLIP-44's coin type 1, "Testnet (all coins)" — instead
+of `m/<purpose>'/0'/…`. Everything the view reports then comes from that one
+entry: the account path, the `xfp` a sign request must carry, the addresses
+and the extended key.
+
+Only those two levels are examined, on either network, and the FIRST matching
+entry wins. An export whose only BIP-84 testnet entry is `m/84'/1'/2'` answers
+with that one, and a five-level leaf such as `m/84'/1'/0'/0/0` matches too —
+read `accountPath` rather than assuming a `0'` account index. An entry counts
+only when its purpose and its coin type are both **hardened**: a
+`crypto-keypath` can spell a soft level, and `m/84'/1/0'` is a different key,
+not a testnet account.
+
+| Purpose | Address | `xpub()` | `zpub()` |
+|---|---|---|---|
+| 84 | `tb1q…` | `tpub…` | `vpub…` |
+| 49 | `2…` | `tpub…` | throws `invalid-props` |
+| 44 | `m…` / `n…` | `tpub…` | throws `invalid-props` |
+| 86 | `deriveAddress` throws | `tpub…` | throws `invalid-props` |
+
+`zpub()` keeps its name and its rule — BIP-84 only — and on testnet returns
+SLIP-132's BIP-84 testnet key, whose version bytes spell `vpub`.
+
+**There is no fallback between the two networks.** An export that carries no
+coin-type-1' account returns `null`, and asking for mainnet on a testnet-only
+export returns `null` the same way. A view that answered a testnet request
+with the mainnet key under a `tb` prefix would be a confident wrong answer:
+the address would be for a chain whose coins that account will never hold,
+while the path and the `xfp` inside the sign request stayed mainnet.
+
+**ERA wallets export Bitcoin accounts at coin type 0' only**, so
+`accounts.btc(testnet: true)` returns `null` for every current ERA export —
+handle the null rather than assuming a testnet account is there. The parameter
+stays because the export format carries coin-type-1' accounts and other wallet
+profiles do export them.
+
+Finally, a coin-type-1' entry classifies as `AccountChain.unknown` in
+`accounts.keys`, not as `btc`. Coin type 1 is "Testnet (**all** coins)", so
+`m/84'/1'/0'` is as much a Litecoin testnet account as a Bitcoin one, and
+classification reads the path alone with nothing to break the tie.
+`btc(testnet: true)` may resolve that same entry only because the caller named
+the chain.
+
 ## 1. Build the request
 
 ### PSBT
