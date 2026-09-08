@@ -16,6 +16,10 @@ TON, Cardano, Sui, Cosmos and XRP.
 - **Zero I/O.** No network calls, ever. Nothing leaves the process.
 - **No keys, ever.** The device signs; this package builds requests, reads
   replies and derives public addresses. There is no signer here to misuse.
+- **Every address the export carries.** All four Bitcoin script types including
+  taproot, the Bitcoin-like altcoins, the three EVM derivation schemes, all
+  three Solana schemes, 33 Cosmos zones with Ethermint, Cardano base addresses
+  and TON wallet addresses — computed locally from the linked account.
 - **Hardened where it matters.** A scanned QR is attacker-controlled input, so
   it is treated that way: bounds precede allocations, the scanner refuses
   hostile frames, every reply must echo its request id, and compressed replies

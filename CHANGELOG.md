@@ -8,7 +8,7 @@
 - TON addresses: `TonAccountView.address` (`UQ…`) and `.bounceableAddress`
   (`EQ…`), plus the exported `tonAddressFromPublicKey`. The address is the hash
   of the V4R2 wallet contract's `StateInit`, pinned by the firmware's own
-  device-verified vector. V5R1 is not implemented — no profile exports it.
+  device-verified vector.
 
 - Cardano addresses: `CardanoAccountView.deriveAddress(i, change: ...)` returns
   the Shelley base address, and `cardanoBaseAddress(payment, stake)` is
