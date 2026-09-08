@@ -325,6 +325,45 @@ class TronAccountView {
 }
 
 /// Bitcoin Cash view: `m/44'/145'/0'`, CashAddr P2PKH addresses.
+/// An EVM account under one of Ledger's two alternative schemes.
+///
+/// The device exports three EVM derivations, and [EraAccounts.evm] answers
+/// only the standard one. These two were invisible: `ledgerLive` ships ten
+/// fully derived leaves at `m/44'/60'/<n>'/0/0` — one key per account, nothing
+/// to derive further — while `ledgerLegacy` is an account whose addresses sit
+/// ONE level below it, at `m/44'/60'/0'/<index>`, not two.
+enum EvmLedgerScheme { ledgerLive, ledgerLegacy }
+
+class EvmLedgerAccountView {
+  EvmLedgerAccountView(this._entry, this._resolvedXfp, this.scheme);
+
+  final RawAccountEntry _entry;
+  final int _resolvedXfp;
+  final EvmLedgerScheme scheme;
+
+  String get xfp => xfpToHex(_resolvedXfp);
+
+  /// The exported path: an account for `ledgerLegacy`, a leaf for
+  /// `ledgerLive`.
+  String get path => formatPath(_entry.path);
+
+  /// `ledgerLive`: the address of the exported key itself, which is all the
+  /// export carries. `ledgerLegacy`: the address at `<account>/<index>`.
+  String deriveAddress([int index = 0]) {
+    if (scheme == EvmLedgerScheme.ledgerLive) {
+      if (index != 0) {
+        throw EraSdkError(
+            'invalid-props',
+            'a Ledger Live entry is one already-derived key; ask for another '
+                'entry, not another index');
+      }
+      return derive.evmAddressFromPublicKey(_requireKey(_entry, 33));
+    }
+    return derive.evmAddressFromPublicKey(derive.derivePublicKeyChild(
+        _requireKey(_entry, 33), _withChainCode(_entry), index));
+  }
+}
+
 /// The Bitcoin-like altcoins, which differ only in constants.
 enum UtxoChain { litecoin, dogecoin, dash }
 
@@ -923,6 +962,31 @@ class EraAccounts {
   BchAccountView? bch() {
     final entry = _find((e) => _classify(e.path) == AccountChain.bch);
     return entry == null ? null : BchAccountView(entry, _resolveXfp(entry));
+  }
+
+  /// The Ledger Live EVM accounts — ten fully derived leaves at
+  /// `m/44'/60'/<n>'/0/0`, in export order. They carry a chain code, which is
+  /// what tells them apart from the Ethermint keys that share the same path
+  /// shape and carry none.
+  List<EvmLedgerAccountView> evmLedgerLive() => _raw.entries
+      .where((e) =>
+          _classify(e.path) == AccountChain.evm &&
+          e.path.length == 5 &&
+          e.chainCode != null)
+      .map((e) => EvmLedgerAccountView(
+          e, _resolveXfp(e), EvmLedgerScheme.ledgerLive))
+      .toList();
+
+  /// The Ledger legacy (MEW / MyCrypto) EVM account, whose addresses sit ONE
+  /// level below it. It shares the standard account's path shape, so it is the
+  /// depth-3 EVM entry that is NOT the standard one.
+  EvmLedgerAccountView? evmLedgerLegacy() {
+    final entry = _find((e) =>
+        _isEvmAccount(e) && e.note != null && e.note != 'account.standard');
+    return entry == null
+        ? null
+        : EvmLedgerAccountView(
+            entry, _resolveXfp(entry), EvmLedgerScheme.ledgerLegacy);
   }
 
   /// A Litecoin, Dogecoin or Dash account. [purpose] picks the script type

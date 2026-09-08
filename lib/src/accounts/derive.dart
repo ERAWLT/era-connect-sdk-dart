@@ -10,6 +10,19 @@ import '../crypto/digests.dart';
 import '../crypto/secp256k1.dart';
 
 /// Non-hardened BIP-32 child public key from an account-level (publicKey, chainCode).
+/// One non-hardened BIP-32 step from an account-level (publicKey, chainCode).
+///
+/// The Ledger *legacy* EVM scheme (MEW / MyCrypto) puts its addresses one
+/// level below the account — `m/44'/60'/0'/<index>` — not two, so it cannot go
+/// through [derivePublicKey], which always takes a change level first.
+Uint8List derivePublicKeyChild(
+  Uint8List publicKey,
+  Uint8List chainCode,
+  int index,
+) {
+  return derivePublicKeyPath(publicKey, chainCode, [index]);
+}
+
 Uint8List derivePublicKey(
   Uint8List publicKey,
   Uint8List chainCode,

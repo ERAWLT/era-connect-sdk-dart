@@ -1,5 +1,10 @@
 ## Unreleased
 
+- The two Ledger EVM schemes are reachable: `evmLedgerLive()` returns the fully
+  derived leaves at `m/44'/60'/<n>'/0/0` (index other than 0 throws — there is
+  nothing below a leaf) and `evmLedgerLegacy()` the account whose addresses sit
+  ONE level below it. `derivePublicKeyChild` is exported for that single step.
+
 - TON addresses: `TonAccountView.address` (`UQ…`) and `.bounceableAddress`
   (`EQ…`), plus the exported `tonAddressFromPublicKey`. The address is the hash
   of the V4R2 wallet contract's `StateInit`, pinned by the firmware's own

@@ -1640,4 +1640,96 @@ void main() {
       );
     });
   });
+
+  /// The device exports three EVM derivations and [EraAccounts.evm] answers
+  /// only the standard one, so the other two were invisible. They are not
+  /// interchangeable: Ledger Live ships fully derived LEAVES (one key per
+  /// account, nothing to derive), while Ledger legacy is an account whose
+  /// addresses sit ONE level below it rather than two.
+  group('the two Ledger EVM schemes', () {
+    final master = TestHdNode.fromMasterSeed(testSeed);
+
+    CborValue entryAt(List<(int, bool)> levels,
+        {String? note, bool chainCode = true}) {
+      final node = master.derivePath(levels);
+      return cbMap([
+        (3, cbBytes(node.publicKey)),
+        if (chainCode) (4, cbBytes(node.chainCode)),
+        (
+          6,
+          cbTag(
+            304,
+            cbMap([(1, pathComponents(levels)), (2, cbUint(0x11111111))]),
+          )
+        ),
+        if (note != null) (10, cbText(note)),
+      ]);
+    }
+
+    const acct = [(44, true), (60, true), (0, true)];
+    const live0 = [(44, true), (60, true), (0, true), (0, false), (0, false)];
+    const live1 = [(44, true), (60, true), (1, true), (0, false), (0, false)];
+
+    final wallet = EraAccounts.fromUr(Ur(
+      'crypto-multi-accounts',
+      cborEncode(cbMap([
+        (1, cbUint(master.fingerprint)),
+        (
+          2,
+          cbArray([
+            entryAt(acct, note: 'account.standard'),
+            entryAt(acct, note: 'account.ledger_legacy'),
+            entryAt(live0),
+            entryAt(live1),
+            // Ethermint: same path shape as a Ledger Live leaf, no chain code.
+            entryAt(live0, chainCode: false),
+          ])
+        ),
+      ])),
+    ));
+
+    test('evm() still answers the standard account', () {
+      expect(wallet.evm()!.accountPath, "m/44'/60'/0'");
+      expect(
+        wallet.evm()!.deriveAddress(0),
+        derive.evmAddressFromPublicKey(master.derivePath(live0).publicKey),
+      );
+    });
+
+    test('ledger legacy derives ONE level below the account, not two', () {
+      final legacy = wallet.evmLedgerLegacy()!;
+      expect(legacy.scheme, EvmLedgerScheme.ledgerLegacy);
+      expect(legacy.path, "m/44'/60'/0'");
+      final account = master.derivePath(acct);
+      expect(
+        legacy.deriveAddress(3),
+        derive.evmAddressFromPublicKey(derive.derivePublicKeyChild(
+            account.publicKey, account.chainCode, 3)),
+      );
+      // ...which is a different address from the standard scheme's index 3.
+      expect(legacy.deriveAddress(3), isNot(wallet.evm()!.deriveAddress(3)));
+    });
+
+    test('ledger live entries are already-derived leaves, in export order', () {
+      final live = wallet.evmLedgerLive();
+      expect(live.map((v) => v.path).toList(),
+          ["m/44'/60'/0'/0/0", "m/44'/60'/1'/0/0"]);
+      expect(live[0].deriveAddress(),
+          derive.evmAddressFromPublicKey(master.derivePath(live0).publicKey));
+    });
+
+    test('the chain-code-less Ethermint leaf is not mistaken for Ledger Live',
+        () {
+      // Five entries share `m/44'/60'`; only two are Ledger Live leaves.
+      expect(wallet.evmLedgerLive(), hasLength(2));
+    });
+
+    test('a Ledger Live entry refuses to pretend it can derive further', () {
+      expect(
+        () => wallet.evmLedgerLive()[0].deriveAddress(1),
+        throwsA(predicate((e) =>
+            '$e'.contains('ask for another entry, not another index'))),
+      );
+    });
+  });
 }
