@@ -125,8 +125,7 @@ AccountChain _classify(List<PathLevel> path) {
     return AccountChain.btc;
   }
   if (p0.index == 44 && p1.index == 145) return AccountChain.bch;
-  if (p1.index == 2 &&
-      (p0.index == 84 || p0.index == 49 || p0.index == 44)) {
+  if (p1.index == 2 && (p0.index == 84 || p0.index == 49 || p0.index == 44)) {
     return AccountChain.litecoin;
   }
   if (p0.index == 44 && p1.index == 3) return AccountChain.dogecoin;
@@ -393,8 +392,8 @@ class _UtxoChainParams {
 /// these version bytes are the only thing separating one chain's addresses
 /// from another's, so they are pinned to the device that produces the keys.
 const Map<UtxoChain, _UtxoChainParams> _utxoChains = {
-  UtxoChain.litecoin: _UtxoChainParams(
-      p2pkh: 48, p2sh: 50, hrp: 'ltc', purposes: [84, 49, 44]),
+  UtxoChain.litecoin:
+      _UtxoChainParams(p2pkh: 48, p2sh: 50, hrp: 'ltc', purposes: [84, 49, 44]),
   UtxoChain.dogecoin: _UtxoChainParams(p2pkh: 30, p2sh: 22, purposes: [44]),
   UtxoChain.dash: _UtxoChainParams(p2pkh: 76, p2sh: 16, purposes: [44]),
 };
@@ -520,6 +519,7 @@ class TonAccountView {
 
   /// The account label (`name`, falling back to `note`), when present.
   String? get name => _entry.name ?? _entry.note;
+
   /// The V4R2 wallet address — the contract this key would deploy, not a hash
   /// of the key itself. Non-bounceable (`UQ…`) by default, which is the form a
   /// wallet shows for receiving.
@@ -528,7 +528,6 @@ class TonAccountView {
   /// The same account under the bounceable tag (`EQ…`).
   String get bounceableAddress =>
       derive.tonAddressFromPublicKey(publicKey, bounceable: true);
-
 }
 
 /// Cardano view (CIP-1852): the exported account key supports SOFT public
@@ -652,7 +651,8 @@ class SolanaAccountView {
 /// one.
 /// One Cosmos SDK zone, as the firmware's `CosmosCoinInfo` table declares it.
 class CosmosChainInfo {
-  const CosmosChainInfo(this.id, this.hrp, this.slip44, {this.ethermint = false});
+  const CosmosChainInfo(this.id, this.hrp, this.slip44,
+      {this.ethermint = false});
 
   /// Stable lowercase id, e.g. `osmosis`, `terra-classic`.
   final String id;
@@ -973,8 +973,8 @@ class EraAccounts {
           _classify(e.path) == AccountChain.evm &&
           e.path.length == 5 &&
           e.chainCode != null)
-      .map((e) => EvmLedgerAccountView(
-          e, _resolveXfp(e), EvmLedgerScheme.ledgerLive))
+      .map((e) =>
+          EvmLedgerAccountView(e, _resolveXfp(e), EvmLedgerScheme.ledgerLive))
       .toList();
 
   /// The Ledger legacy (MEW / MyCrypto) EVM account, whose addresses sit ONE
@@ -1070,7 +1070,9 @@ class EraAccounts {
   CosmosAccountView? cosmos([String? chainId]) {
     if (chainId == null) {
       final entry = _find((e) => _classify(e.path) == AccountChain.cosmos);
-      return entry == null ? null : CosmosAccountView(entry, _resolveXfp(entry));
+      return entry == null
+          ? null
+          : CosmosAccountView(entry, _resolveXfp(entry));
     }
     final zone = cosmosChain(chainId);
     final entry = zone.ethermint
@@ -1087,8 +1089,10 @@ class EraAccounts {
   }
 
   /// Every Cosmos zone this export can actually serve an address for.
-  List<CosmosChainInfo> availableCosmosChains() =>
-      [for (final c in cosmosChains) if (cosmos(c.id) != null) c];
+  List<CosmosChainInfo> availableCosmosChains() => [
+        for (final c in cosmosChains)
+          if (cosmos(c.id) != null) c
+      ];
 
   /// The XRP account (`m/44'/144'/0'`), if the export carries one.
   XrpAccountView? xrp() {

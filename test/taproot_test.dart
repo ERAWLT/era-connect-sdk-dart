@@ -46,8 +46,10 @@ void main() {
       final child = _childAt(0, 0);
       expect(bytesToHex(Uint8List.sublistView(child, 1)),
           'cc8a4bc64d897bddc5fbc2f670f7a8ba0b386779106cf1223c6fc5d7cd6fc115');
-      expect(btcTaprootAddressFromPublicKey(child),
-          isNot('bc1pej9yh3jd39aam30mctm8paaghg9nsemezpk0zg3udlza0nt0cy2sqvps98'));
+      expect(
+          btcTaprootAddressFromPublicKey(child),
+          isNot(
+              'bc1pej9yh3jd39aam30mctm8paaghg9nsemezpk0zg3udlza0nt0cy2sqvps98'));
     });
 
     test('uses bech32m, not bech32', () {
@@ -57,7 +59,9 @@ void main() {
     });
 
     test('honours the testnet hrp', () {
-      expect(btcTaprootAddressFromPublicKey(_childAt(0, 0), 'tb').startsWith('tb1p'),
+      expect(
+          btcTaprootAddressFromPublicKey(_childAt(0, 0), 'tb')
+              .startsWith('tb1p'),
           isTrue);
     });
 

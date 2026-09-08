@@ -134,7 +134,8 @@ void main() {
       expect(accounts.btc(purpose: 49, testnet: true), isNull);
     });
 
-    test('btc purpose 86 (taproot: tweaked output key, zpub still refused)', () {
+    test('btc purpose 86 (taproot: tweaked output key, zpub still refused)',
+        () {
       final want = views['btc86'] as Map<String, dynamic>;
       final btc = accounts.btc(purpose: 86)!;
       expect(btc.xfp, want['xfp']);

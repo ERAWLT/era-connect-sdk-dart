@@ -1071,8 +1071,7 @@ void main() {
         expect(btc.deriveAddress(0), startsWith(entry.value),
             reason: 'testnet: ${entry.key}');
         expect(btc.deriveAddress(0, change: true), startsWith(entry.value));
-        expect(btc.deriveAddress(0),
-            isNot(btc.deriveAddress(0, change: true)));
+        expect(btc.deriveAddress(0), isNot(btc.deriveAddress(0, change: true)));
       }
     });
 
@@ -1294,8 +1293,8 @@ void main() {
     test('derives dogecoin and dash', () {
       expect(wallet.dogecoin()!.deriveAddress(0),
           'DBus3bamQjgJULBJtYXpEzDWQRwF5iwxgC');
-      expect(
-          wallet.dash()!.deriveAddress(0), 'XoJA8qE3N2Y3jMLEtZ3vcN42qseZ8LvFf5');
+      expect(wallet.dash()!.deriveAddress(0),
+          'XoJA8qE3N2Y3jMLEtZ3vcN42qseZ8LvFf5');
     });
 
     test('answers null for a script type the export does not carry', () {
@@ -1356,8 +1355,7 @@ void main() {
       // THORChain 931, Terra Classic 330 — which shares Terra's).
       expect(cosmosChains.where((c) => c.slip44 == 118), hasLength(24));
       expect(cosmosChains.where((c) => c.ethermint), hasLength(3));
-      expect(
-          cosmosChains.where((c) => c.slip44 != 118 && !c.ethermint),
+      expect(cosmosChains.where((c) => c.slip44 != 118 && !c.ethermint),
           hasLength(6));
     });
 
@@ -1369,8 +1367,8 @@ void main() {
     test('names the zone in the error when an id is unknown', () {
       expect(
           () => cosmosChain('nope'),
-          throwsA(predicate(
-              (e) => '$e'.contains('unknown Cosmos chain "nope"'))));
+          throwsA(
+              predicate((e) => '$e'.contains('unknown Cosmos chain "nope"'))));
     });
 
     test('gives every 118 zone the same key under its own hrp', () {
@@ -1391,7 +1389,8 @@ void main() {
       expect(kava.accountPath, "m/44'/459'/0'");
       expect(kava.chain?.hrp, 'kava');
       // A bound view needs no options at all.
-      expect(kava.deriveAddress(0), 'kava1fzgm3840v4xwme059mfnx9rc5qgzl0enq7qgac');
+      expect(
+          kava.deriveAddress(0), 'kava1fzgm3840v4xwme059mfnx9rc5qgzl0enq7qgac');
     });
 
     test('answers null for a zone the export does not carry', () {
@@ -1436,8 +1435,7 @@ void main() {
       // `prefix` is the escape hatch for zones the registry does not carry, so
       // it must not silently inherit a bound zone's hashing.
       final inj = wallet.cosmos('injective')!;
-      expect(inj.deriveAddress(0, prefix: 'inj'),
-          isNot(inj.deriveAddress(0)));
+      expect(inj.deriveAddress(0, prefix: 'inj'), isNot(inj.deriveAddress(0)));
     });
   });
 
@@ -1634,8 +1632,8 @@ void main() {
 
     test('refuses anything but a 32-byte ed25519 key', () {
       expect(
-        () => derive.tonAddressFromPublicKey(
-            Uint8List.sublistView(publicKey, 1)),
+        () =>
+            derive.tonAddressFromPublicKey(Uint8List.sublistView(publicKey, 1)),
         throwsA(predicate((e) => '$e'.contains('32-byte ed25519 key'))),
       );
     });
@@ -1727,8 +1725,8 @@ void main() {
     test('a Ledger Live entry refuses to pretend it can derive further', () {
       expect(
         () => wallet.evmLedgerLive()[0].deriveAddress(1),
-        throwsA(predicate((e) =>
-            '$e'.contains('ask for another entry, not another index'))),
+        throwsA(predicate(
+            (e) => '$e'.contains('ask for another entry, not another index'))),
       );
     });
   });
