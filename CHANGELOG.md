@@ -1,5 +1,16 @@
 ## Unreleased
 
+- Litecoin, Dogecoin and Dash are classified (coin types 2', 3', 5') and
+  addressable through `litecoin()`, `dogecoin()`, `dash()` returning a
+  `UtxoAccountView`. Version bytes come from the firmware's `CoinInfo`: LTC
+  48/50, DOGE 30/22, DASH 76/16. `p2pkhAddressFromPublicKey` and
+  `nestedSegwitAddressFromPublicKey` take the version byte explicitly and are
+  exported; the Bitcoin helpers delegate to them.
+- `evm()` now requires an account-shaped entry (depth 3). It used to take the
+  first entry that classified as `evm`, which on an export carrying Ledger Live
+  or Ethermint leaves could be one of those — and a view over a leaf derives
+  two levels below it, answering a real key at a nonsense path.
+
 **Behaviour change — `EraAccounts.btc(purpose: 86).deriveAddress()` now returns
 an address instead of throwing.** The SDK used to refuse taproot and tell the
 caller to derive it "from `xpub()` with your Bitcoin library". A consumer did

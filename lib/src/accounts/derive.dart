@@ -81,31 +81,43 @@ String btcTaprootAddressFromPublicKey(
   return bech32mEncode(hrp, [1, ...convertBits(outputKey, 8, 5, pad: true)]);
 }
 
-/// Legacy P2PKH base58check address (`1...`).
-String btcP2pkhAddressFromPublicKey(
-  Uint8List publicKey33, [
-  bool testnet = false,
-]) {
+/// P2PKH base58check under an explicit version byte. Bitcoin is 0x00 mainnet
+/// / 0x6f testnet, Litecoin 48, Dogecoin 30, Dash 76 — the numbers the
+/// firmware carries in each coin's `CoinInfo`. A version byte is the only
+/// thing separating these chains' addresses, so it is a parameter rather than
+/// a per-chain copy of the same six lines.
+String p2pkhAddressFromPublicKey(Uint8List publicKey33, int version) {
   return base58CheckEncode(concatBytes([
-    Uint8List.fromList([testnet ? 0x6f : 0x00]),
+    Uint8List.fromList([version]),
     hash160(publicKey33),
   ]));
 }
 
-/// Nested segwit (P2SH-P2WPKH) base58check address (`3...`).
-String btcNestedSegwitAddressFromPublicKey(
-  Uint8List publicKey33, [
-  bool testnet = false,
-]) {
+/// P2SH-P2WPKH base58check under an explicit P2SH version byte.
+String nestedSegwitAddressFromPublicKey(Uint8List publicKey33, int version) {
   final redeemScript = concatBytes([
     Uint8List.fromList([0x00, 0x14]),
     hash160(publicKey33),
   ]);
   return base58CheckEncode(concatBytes([
-    Uint8List.fromList([testnet ? 0xc4 : 0x05]),
+    Uint8List.fromList([version]),
     hash160(redeemScript),
   ]));
 }
+
+/// Legacy P2PKH base58check address (`1...`).
+String btcP2pkhAddressFromPublicKey(
+  Uint8List publicKey33, [
+  bool testnet = false,
+]) =>
+    p2pkhAddressFromPublicKey(publicKey33, testnet ? 0x6f : 0x00);
+
+/// Nested segwit (P2SH-P2WPKH) base58check address (`3...`).
+String btcNestedSegwitAddressFromPublicKey(
+  Uint8List publicKey33, [
+  bool testnet = false,
+]) =>
+    nestedSegwitAddressFromPublicKey(publicKey33, testnet ? 0xc4 : 0x05);
 
 /// Cosmos bech32 address: plain bech32 of the 20-byte hash160, with NO
 /// witness-version prefix (that is a segwit thing, not a Cosmos one). Every

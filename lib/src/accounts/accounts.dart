@@ -26,6 +26,16 @@ enum AccountChain {
   /// `m/44'/145'` — Bitcoin Cash.
   bch,
 
+  /// `m/84'|49'|44'/2'` — Litecoin. Unlike coin type 1', coin type 2' is
+  /// unambiguous, so attribution needs no caller intent.
+  litecoin,
+
+  /// `m/44'/3'` — Dogecoin.
+  dogecoin,
+
+  /// `m/44'/5'` — Dash.
+  dash,
+
   /// `m/44'/501'` — Solana.
   solana,
 
@@ -115,6 +125,12 @@ AccountChain _classify(List<PathLevel> path) {
     return AccountChain.btc;
   }
   if (p0.index == 44 && p1.index == 145) return AccountChain.bch;
+  if (p1.index == 2 &&
+      (p0.index == 84 || p0.index == 49 || p0.index == 44)) {
+    return AccountChain.litecoin;
+  }
+  if (p0.index == 44 && p1.index == 3) return AccountChain.dogecoin;
+  if (p0.index == 44 && p1.index == 5) return AccountChain.dash;
   if (p0.index == 44 && p1.index == 501) return AccountChain.solana;
   if (p0.index == 44 && p1.index == 195) return AccountChain.tron;
   if (p0.index == 44 && p1.index == 607) return AccountChain.ton;
@@ -303,6 +319,104 @@ class TronAccountView {
 }
 
 /// Bitcoin Cash view: `m/44'/145'/0'`, CashAddr P2PKH addresses.
+/// The Bitcoin-like altcoins, which differ only in constants.
+enum UtxoChain { litecoin, dogecoin, dash }
+
+class _UtxoChainParams {
+  const _UtxoChainParams({
+    required this.p2pkh,
+    required this.p2sh,
+    required this.purposes,
+    this.hrp,
+  });
+
+  /// base58check version byte for P2PKH — Litecoin 48 ("L"), Doge 30 ("D"),
+  /// Dash 76 ("X").
+  final int p2pkh;
+
+  /// base58check version byte for P2SH — Litecoin 50 ("M"), Doge 22, Dash 16.
+  final int p2sh;
+
+  /// Segwit HRP, where the chain has segwit at all.
+  final String? hrp;
+
+  /// BIP purposes the chain's derivation vector declares, best first.
+  final List<int> purposes;
+}
+
+/// Taken from each coin's `CoinInfo` in the firmware, not from a registry:
+/// these version bytes are the only thing separating one chain's addresses
+/// from another's, so they are pinned to the device that produces the keys.
+const Map<UtxoChain, _UtxoChainParams> _utxoChains = {
+  UtxoChain.litecoin: _UtxoChainParams(
+      p2pkh: 48, p2sh: 50, hrp: 'ltc', purposes: [84, 49, 44]),
+  UtxoChain.dogecoin: _UtxoChainParams(p2pkh: 30, p2sh: 22, purposes: [44]),
+  UtxoChain.dash: _UtxoChainParams(p2pkh: 76, p2sh: 16, purposes: [44]),
+};
+
+AccountChain _chainOf(UtxoChain chain) => switch (chain) {
+      UtxoChain.litecoin => AccountChain.litecoin,
+      UtxoChain.dogecoin => AccountChain.dogecoin,
+      UtxoChain.dash => AccountChain.dash,
+    };
+
+/// A Litecoin, Dogecoin or Dash account.
+///
+/// The SDK signed PSBTs for these three long before it could name an address
+/// for them: [_classify] returned [AccountChain.unknown] and there was no
+/// view, so a caller holding a perfectly good Litecoin account had no way to
+/// ask this SDK where to receive. The encoding is the same machinery Bitcoin
+/// already uses, under different version bytes.
+class UtxoAccountView {
+  UtxoAccountView(this._entry, this._resolvedXfp, this.chain);
+
+  final RawAccountEntry _entry;
+  final int _resolvedXfp;
+  final UtxoChain chain;
+
+  _UtxoChainParams get _params => _utxoChains[chain]!;
+
+  /// The BIP purpose this account was exported under — 84, 49 or 44.
+  int get purpose => _entry.path[0].index;
+
+  String get xfp => xfpToHex(_resolvedXfp);
+
+  String get accountPath => formatPath(_entry.path);
+
+  String receivePath(int index) => '$accountPath/0/$index';
+
+  String changePath(int index) => '$accountPath/1/$index';
+
+  Uint8List derivePublicKey(int index, {bool change = false}) =>
+      derive.derivePublicKey(
+        _requireKey(_entry, 33),
+        _withChainCode(_entry),
+        change ? 1 : 0,
+        index,
+      );
+
+  /// The address at receive (or [change]) [index], in this account's script
+  /// type.
+  String deriveAddress(int index, {bool change = false}) {
+    final child = derivePublicKey(index, change: change);
+    final params = _params;
+    final hrp = params.hrp;
+    if (purpose == 84 && hrp != null) {
+      return derive.btcP2wpkhAddressFromPublicKey(child, hrp);
+    }
+    if (purpose == 49) {
+      return derive.nestedSegwitAddressFromPublicKey(child, params.p2sh);
+    }
+    if (purpose == 44) {
+      return derive.p2pkhAddressFromPublicKey(child, params.p2pkh);
+    }
+    throw EraSdkError('invalid-props',
+        '${chain.name} has no address encoding for BIP purpose $purpose');
+  }
+
+  String xpub() => _extendedKeyOf(_entry);
+}
+
 class BchAccountView {
   BchAccountView(this._entry, this._resolvedXfp);
 
@@ -667,6 +781,36 @@ class EraAccounts {
     final entry = _find((e) => _classify(e.path) == AccountChain.bch);
     return entry == null ? null : BchAccountView(entry, _resolveXfp(entry));
   }
+
+  /// A Litecoin, Dogecoin or Dash account. [purpose] picks the script type
+  /// where the chain has more than one — Litecoin is exported as BIP-84 by
+  /// every ERA profile, but a third-party profile may carry 49 or 44 instead,
+  /// so the default is "whichever the export actually holds", best first.
+  UtxoAccountView? utxo(UtxoChain chain, {int? purpose}) {
+    final wanted = _chainOf(chain);
+    final purposes = purpose == null ? _utxoChains[chain]!.purposes : [purpose];
+    for (final p in purposes) {
+      final entry = _find((e) =>
+          _classify(e.path) == wanted &&
+          e.path.length == 3 &&
+          e.path[0].index == p);
+      if (entry != null) {
+        return UtxoAccountView(entry, _resolveXfp(entry), chain);
+      }
+    }
+    return null;
+  }
+
+  /// The Litecoin account — BIP-84 native segwit unless the export says
+  /// otherwise.
+  UtxoAccountView? litecoin({int? purpose}) =>
+      utxo(UtxoChain.litecoin, purpose: purpose);
+
+  /// The Dogecoin account (`m/44'/3'/0'`, legacy P2PKH — no segwit).
+  UtxoAccountView? dogecoin() => utxo(UtxoChain.dogecoin);
+
+  /// The Dash account (`m/44'/5'/0'`, legacy P2PKH — no segwit).
+  UtxoAccountView? dash() => utxo(UtxoChain.dash);
 
   /// The TON account (linked via the Tonkeeper-style `crypto-hdkey` export).
   TonAccountView? ton() {

@@ -1185,4 +1185,122 @@ void main() {
       );
     });
   });
+
+  /// Litecoin, Dogecoin and Dash: the same base58check/bech32 machinery
+  /// Bitcoin already uses, under different version bytes. Those bytes come
+  /// from each coin's `CoinInfo` in the firmware (`BitcoinDispatcher.cpp`) —
+  /// LTC 48/50, DOGE 30/22, DASH 76/16 — because they are the only thing
+  /// separating one chain's addresses from another's.
+  ///
+  /// The expectations were produced by a standalone stdlib oracle that
+  /// reproduces the published BIP-44 and BIP-84 Bitcoin vectors for this very
+  /// seed byte-for-byte, never by this package.
+  group('Litecoin, Dogecoin and Dash', () {
+    final master = TestHdNode.fromMasterSeed(testSeed);
+
+    Uint8List keyAt(List<(int, bool)> levels) =>
+        master.derivePath(levels).publicKey;
+
+    List<(int, bool)> leaf(int purpose, int coin) =>
+        [(purpose, true), (coin, true), (0, true), (0, false), (0, false)];
+
+    test("litecoin native segwit (m/84'/2') is ltc1q…", () {
+      expect(
+        derive.btcP2wpkhAddressFromPublicKey(keyAt(leaf(84, 2)), 'ltc'),
+        'ltc1qjmxnz78nmc8nq77wuxh25n2es7rzm5c2rkk4wh',
+      );
+    });
+
+    test("litecoin nested segwit (m/49'/2') is M…, not Bitcoin's 3…", () {
+      expect(
+        derive.nestedSegwitAddressFromPublicKey(keyAt(leaf(49, 2)), 50),
+        'M7wtsL7wSHDBJVMWWhtQfTMSYYkyooAAXM',
+      );
+    });
+
+    test("litecoin legacy (m/44'/2') is L…", () {
+      expect(derive.p2pkhAddressFromPublicKey(keyAt(leaf(44, 2)), 48),
+          'LUWPbpM43E2p7ZSh8cyTBEkvpHmr3cB8Ez');
+    });
+
+    test('dogecoin is D…', () {
+      expect(derive.p2pkhAddressFromPublicKey(keyAt(leaf(44, 3)), 30),
+          'DBus3bamQjgJULBJtYXpEzDWQRwF5iwxgC');
+    });
+
+    test('dash is X…', () {
+      expect(derive.p2pkhAddressFromPublicKey(keyAt(leaf(44, 5)), 76),
+          'XoJA8qE3N2Y3jMLEtZ3vcN42qseZ8LvFf5');
+    });
+
+    test('the generic encoder still answers Bitcoin under version 0', () {
+      // Proves the machinery under the altcoin constants is the same one the
+      // published Bitcoin vectors already pin.
+      expect(derive.p2pkhAddressFromPublicKey(keyAt(leaf(44, 0)), 0x00),
+          '1LqBGSKuX5yYUonjxT5qGfpUsXKYYWeabA');
+    });
+
+    CborValue entryAt(List<(int, bool)> levels, int xfp) {
+      final node = master.derivePath(levels);
+      return cbMap([
+        (3, cbBytes(node.publicKey)),
+        (4, cbBytes(node.chainCode)),
+        (
+          6,
+          cbTag(
+            304,
+            cbMap([
+              (1, pathComponents(levels)),
+              (2, cbUint(xfp)),
+            ]),
+          )
+        ),
+      ]);
+    }
+
+    final wallet = EraAccounts.fromUr(Ur(
+      'crypto-multi-accounts',
+      cborEncode(cbMap([
+        (1, cbUint(master.fingerprint)),
+        (
+          2,
+          cbArray([
+            entryAt([(84, true), (2, true), (0, true)], 0x11111111),
+            entryAt([(44, true), (3, true), (0, true)], 0x22222222),
+            entryAt([(44, true), (5, true), (0, true)], 0x33333333),
+          ])
+        ),
+      ])),
+    ));
+
+    test('classifies each chain at its own mainnet coin type', () {
+      final byPath = {for (final k in wallet.keys) k.path: k.chain};
+      expect(byPath["m/84'/2'/0'"], AccountChain.litecoin);
+      expect(byPath["m/44'/3'/0'"], AccountChain.dogecoin);
+      expect(byPath["m/44'/5'/0'"], AccountChain.dash);
+    });
+
+    test('derives receive and change addresses for litecoin', () {
+      final ltc = wallet.litecoin()!;
+      expect(ltc.purpose, 84);
+      expect(ltc.accountPath, "m/84'/2'/0'");
+      expect(ltc.receivePath(0), "m/84'/2'/0'/0/0");
+      expect(
+          ltc.deriveAddress(0), 'ltc1qjmxnz78nmc8nq77wuxh25n2es7rzm5c2rkk4wh');
+      expect(ltc.deriveAddress(0, change: true),
+          'ltc1qyeljcy9v88jg8sqvnqh0m5q390xruc5r98q9yy');
+    });
+
+    test('derives dogecoin and dash', () {
+      expect(wallet.dogecoin()!.deriveAddress(0),
+          'DBus3bamQjgJULBJtYXpEzDWQRwF5iwxgC');
+      expect(
+          wallet.dash()!.deriveAddress(0), 'XoJA8qE3N2Y3jMLEtZ3vcN42qseZ8LvFf5');
+    });
+
+    test('answers null for a script type the export does not carry', () {
+      expect(wallet.litecoin(purpose: 44), isNull);
+      expect(wallet.litecoin(purpose: 84)!.purpose, 84);
+    });
+  });
 }
