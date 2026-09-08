@@ -117,9 +117,20 @@ List<int> convertBits(List<int> data, int from, int to, {required bool pad}) {
 }
 
 /// Encode 5-bit words as bech32 (constant 1 — segwit v0 addresses).
-String bech32Encode(String hrp, List<int> words) {
+String bech32Encode(String hrp, List<int> words) =>
+    _bech32EncodeWith(hrp, words, 1);
+
+/// Encode 5-bit words as bech32m (constant `0x2bc830a3` — BIP-350, required
+/// for witness version 1 and up, i.e. every taproot address). The two forms
+/// differ only in this constant, and an address built with the wrong one
+/// decodes as invalid rather than as a different address — which is the good
+/// failure mode, but only if the right constant is used at the right version.
+String bech32mEncode(String hrp, List<int> words) =>
+    _bech32EncodeWith(hrp, words, 0x2bc830a3);
+
+String _bech32EncodeWith(String hrp, List<int> words, int constant) {
   final values = [..._bech32HrpExpand(hrp), ...words, 0, 0, 0, 0, 0, 0];
-  final polymod = _bech32Polymod(values) ^ 1;
+  final polymod = _bech32Polymod(values) ^ constant;
   final checksum = [
     for (var i = 0; i < 6; i++) (polymod >> (5 * (5 - i))) & 31
   ];

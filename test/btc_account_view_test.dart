@@ -107,13 +107,8 @@ void main() {
           final receive = (want['receive'] as List).cast<String>();
 
           if (want['deriveAddress'] == 'throws:invalid-props') {
-            expect(purpose, 86);
-            expect(receive, isEmpty);
-            const message =
-                'taproot addresses need the BIP-341 output-key tweak; '
-                'derive them from xpub() with your Bitcoin library';
-            expect(() => view.deriveAddress(0), throwsInvalidProps(message));
-            return;
+            fail('no account in the shared fixture refuses deriveAddress any '
+                'more — delete this branch rather than leaving it unreachable');
           }
 
           expect(receive, isNotEmpty);

@@ -205,7 +205,7 @@
       "btc86": {
         "xfp": "22220086",
         "xpub": "xpub6BgBgsespWvERF3LHQu6CnqdvfEvtMcQjYrcRzx53QJjSxarj2afYWcLteoGVky7D3UKDP9QyrLprQ3VCECoY49yfdDEHGCtMMj92pReUsQ",
-        "deriveAddress0": "throws:invalid-props"
+        "deriveAddress0": "bc1p5cyxnuxmeuwuvkwfem96lqzszd02n6xdcjrs20cac6yqjjwudpxqkedrcr"
       },
       "bch": {
         "accountPath": "m/44'/145'/0'",

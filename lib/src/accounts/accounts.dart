@@ -248,10 +248,8 @@ class BtcAccountView {
       case 49:
         return derive.btcNestedSegwitAddressFromPublicKey(child, _testnet);
       case 86:
-        throw EraSdkError(
-          'invalid-props',
-          'taproot addresses need the BIP-341 output-key tweak; derive them from xpub() with your Bitcoin library',
-        );
+        return derive.btcTaprootAddressFromPublicKey(
+            child, _testnet ? 'tb' : 'bc');
       default:
         throw EraSdkError('invalid-props', 'unsupported BIP purpose $purpose');
     }

@@ -59,6 +59,28 @@ String btcP2wpkhAddressFromPublicKey(
   );
 }
 
+/// P2TR (witness v1) bech32m address — BIP-86 key-path spend, no script tree.
+///
+/// The witness program is the TWEAKED output key, not the BIP-32 child key:
+/// `P = lift_x(x(child))`, `t = tagged("TapTweak", x(P))`, `Q = P + t*G`, and
+/// the program is `x(Q)`. Encoding the untweaked internal key instead gives a
+/// perfectly valid, perfectly wrong `bc1p…` — an address the device never
+/// derives and cannot key-path spend, because the firmware signs for Q.
+String btcTaprootAddressFromPublicKey(
+  Uint8List publicKey33, [
+  String hrp = 'bc',
+]) {
+  if (publicKey33.length != 33) {
+    throw EraSdkError('invalid-props',
+        'taproot needs a 33-byte compressed key, got ${publicKey33.length}');
+  }
+  // The compressed prefix carries the child key's Y parity; BIP-341 discards
+  // it and lifts an even Y, so the internal key is the bare x coordinate.
+  final outputKey =
+      Secp256k1.taprootOutputKey(Uint8List.sublistView(publicKey33, 1));
+  return bech32mEncode(hrp, [1, ...convertBits(outputKey, 8, 5, pad: true)]);
+}
+
 /// Legacy P2PKH base58check address (`1...`).
 String btcP2pkhAddressFromPublicKey(
   Uint8List publicKey33, [

@@ -1060,21 +1060,19 @@ void main() {
       }
     });
 
-    test('a taproot view refuses addresses by code AND message', () {
+    test('a taproot view derives tweaked bech32m addresses', () {
+      // Purpose 86 used to throw here. It now answers, and what it answers is
+      // pinned against the published BIP-86 vectors in taproot_test.dart; this
+      // holds only the wiring — that the view reaches the taproot encoder and
+      // picks the hrp off the network.
       final accounts = walletOf([...mainnetEntries(), ...testnetEntries()]);
-      for (final testnet in [false, true]) {
-        final btc = accounts.btc(purpose: 86, testnet: testnet)!;
-        expect(
-          () => btc.deriveAddress(0),
-          throwsA(isA<EraSdkError>()
-              .having((e) => e.code, 'code', 'invalid-props')
-              .having(
-                  (e) => e.message,
-                  'message',
-                  'taproot addresses need the BIP-341 output-key tweak; '
-                      'derive them from xpub() with your Bitcoin library')),
-          reason: 'testnet: $testnet',
-        );
+      for (final entry in {false: 'bc1p', true: 'tb1p'}.entries) {
+        final btc = accounts.btc(purpose: 86, testnet: entry.key)!;
+        expect(btc.deriveAddress(0), startsWith(entry.value),
+            reason: 'testnet: ${entry.key}');
+        expect(btc.deriveAddress(0, change: true), startsWith(entry.value));
+        expect(btc.deriveAddress(0),
+            isNot(btc.deriveAddress(0, change: true)));
       }
     });
 

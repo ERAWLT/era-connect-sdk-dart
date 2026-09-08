@@ -1,5 +1,5 @@
 {
-  "note": "The expectations in this file are independently derived published BIP-32/49/84 test vectors for the standard test mnemonic and must never be regenerated from either implementation.",
+  "note": "The expectations in this file are independently derived published BIP-32/49/84 test vectors for the standard test mnemonic and must never be regenerated from either implementation. Taproot (purpose 86) mainnet values are the published BIP-86 vectors; the testnet values were derived by a standalone stdlib oracle that reproduces those same published vectors byte-for-byte, never by this package.",
   "wallet": {
     "cborHex": "a2011a73c5da0a0288a403582103b88e0fbe3f646337ed93bc0c0f3b843fcf7d2589e5ec884754e6402027a890b40458203c8c2037ee4c1621da0d348db51163709a622d0d2838dde6d8419c51f6301c6206d90130a201861854f501f500f5021abb000054081a0ef4b1afa4035821028b42cd4776376c82791b494155151f56c2d7b471e0c7a526a7ce60dd872e38670458206b22c5123ba10adeaf4bfcbb45d1a02d828f25bf8646957a98d06287c4e2b85006d90130a20186182cf501f500f5021abb00002c081a06b037f6a40358210262c1521f5fd87bbb4055f9f6e866d3eaebd179d5bfb9adac3aec682f12948a6704582029493969d5af07bdca312802a84f43f87f2522ee84d4f880947d10849675bd3d06d90130a201861831f501f500f5021abb000031081a94ee2ec0a403582102cfbd7100311e0e85844c3738728314394eb8302a6b5070d692e41b14ba81809004582001835c0b51218376c61455428a9f47bfcce1f6ce8397ead7b00387e9d9ea568306d90130a201861856f501f500f5021abb000056081ae017d1bba403582102707a62fdacc26ea9b63b1c197906f56ee0180d0bcf1966e1a2da34f5f3a09a9b0458204a53a0ab21b9dc95869c4e92a161194e03c0ef3ff5014ac692f433c4765490fc06d90130a201861854f500f500f5021aaa000054081a7ef32bdba403582103774c910fcf07fa96886ea794f0d5caed9afe30b44b83f7e213bb92930e7df4bd0458203da4bc190a2680111d31fadfdc905f2a7f6ce77c6f109919116f253d4344521906d90130a20186182cf500f500f5021aaa00002c081a155bca59a403582102f1f347891b20f7568eae3ec9869fbfb67bcab6f358326f10ecc42356bd55939d0458206eaae365ae0e0a0aab84325cfe7cd76c3b909035f889e7d3f1b847a9a0797ecb06d90130a201861831f500f500f5021aaa000031081a3d05ff75a403582103418278a2885c8bb98148158d1474634097a179c642f23cf1cc04da629ac6f0fb045820c61a8f27e98182314d2444da3e600eb5836ec8ad183c86c311f95df8082b18aa06d90130a201861856f500f500f5021aaa000056081a035270da",
     "ur": "ur:crypto-multi-accounts/oeadcyjksktnbkaolooxaxhdclaxromnbsrnfhieiaemwemurfbnbsfrlrfhtkkidaldvwwploflghvafzcxdipdmhqzaahdcxfnlkcxemwygscmcltnbteelgrebyiajonyiddpbtdeetutvatpfpnsgyyndyceidamtaaddyoeadlncsghykadykaeykaocyrkaeaeghaycybawkpapeoxaxhdclaolufwsnflkoemjzlfkkcwgafpgobzcthfsatsqzjsvtstondsostohnutltdmetioaahdcxjecpskbgfroybkuepegrztrkfettnbdplfmydarslnfgmdknmktiidltssvorogdamtaaddyoeadlncsdwykadykaeykaocyrkaeaedwaycyampfemynoxaxhdclaoidsegmcthetpkgrkfzgoytynvsiytewdwmttkktlrsrhpmpsftwpisdlbgmwleioaahdcxdtgaesintlpeatrysgehdeaopdgwfxyalbdacpwylrtyyalamwkibelrmtkpryfsamtaaddyoeadlncsehykadykaeykaocyrkaeaeehaycymwwydmrtoxaxhdclaotkryjsaeehckbalplrgsemetjplsbbesglrodydrjegdjotbmovecwbbrdlylamhaahdcxadlshhbdgycllskoswbbgofwleneflrssfvyyntolsmswdtspfaxltwltawdhflsamtaaddyoeadlncshfykadykaeykaocyrkaeaehfaycyvtchttrkoxaxhdclaojoknidzcpssajtptrpfrcecfkkamykjtvtcsbtbdtkcfiyvyoetneeykwfnbnyndaahdcxgegunbpyclrhuomdlnnsglmooyhscfglaxrtwsfhykadgeswmowkeosskoghmhztamtaaddyoeadlncsghykaeykaeykaocypkaeaeghaycykbwfdnuyoxaxhdclaxktgsmebstkatzsmtlojtosmwwttlsgwenyzedyqzgrlsylvobwrkmomubakiwkryaahdcxfsoxrfcfbkdslabycaehzsuruomhhedrlbjzvdkejlbenlcfbyjldafsfxfygmcfamtaaddyoeadlncsdwykaeykaeykaocypkaeaedwaycybzhpsghkoxaxhdclaownwfflldcwcxylhfmnplfmsolnnersrpkgsgrpwfhdeyjlbewpsscnhfrygomuntaahdcxjtpkvlihplbabkbkpylreyhhzeketsjzfrmhmhecyaldvdtewnroflptnbkkkbsbamtaaddyoeadlncsehykaeykaeykaocypkaeaeehaycyfsahzmkpoxaxhdclaxfplfksoelohhlurhlyfdbzlgbbjyiafzmsoykkswfwwzfnwnsfaatnidnyswwtzoaahdcxswcymydiwllylfehgtdkfytnfmhnbarelsjtsppmcsfnlnsrbyythlyaaydncspkamtaaddyoeadlncshfykaeykaeykaocypkaeaehfaycyaxgmjotnfnbteybn",
@@ -121,9 +121,12 @@
       "xfp": "bb000056",
       "receivePath0": "m/86'/1'/0'/0/0",
       "changePath0": "m/86'/1'/0'/1/0",
-      "deriveAddress": "throws:invalid-props",
-      "receive": [],
-      "change0": null,
+      "deriveAddress": "supported",
+      "receive": [
+        "tb1p8wpt9v4frpf3tkn0srd97pksgsxc5hs52lafxwru9kgeephvs7rqlqt9zj",
+        "tb1p90h6z3p36n9hrzy7580h5l429uwchyg8uc9sz4jwzhdtuhqdl5eqmpwq6n"
+      ],
+      "change0": "tb1p6uav7en8k7zsumsqugdmg5j6930zmzy4dg7jcddshsr0fvxlqx7q7p5els",
       "xpub": "tpubDDfvzhdVV4unsoKt5aE6dcsNsfeWbTgmLZPi8LQDYU2xixrYemMfWJ3BaVneH3u7DBQePdTwhpybaKRU95pi6PMUtLPBJLVQRpzEnjfjZzX",
       "zpub": "throws:invalid-props"
     },
@@ -184,9 +187,12 @@
       "xfp": "aa000056",
       "receivePath0": "m/86'/0'/0'/0/0",
       "changePath0": "m/86'/0'/0'/1/0",
-      "deriveAddress": "throws:invalid-props",
-      "receive": [],
-      "change0": null,
+      "deriveAddress": "supported",
+      "receive": [
+        "bc1p5cyxnuxmeuwuvkwfem96lqzszd02n6xdcjrs20cac6yqjjwudpxqkedrcr",
+        "bc1p4qhjn9zdvkux4e44uhx8tc55attvtyu358kutcqkudyccelu0was9fqzwh"
+      ],
+      "change0": "bc1p3qkhfews2uk44qtvauqyr2ttdsw7svhkl9nkm9s9c3x4ax5h60wqwruhk7",
       "xpub": "xpub6BgBgsespWvERF3LHQu6CnqdvfEvtMcQjYrcRzx53QJjSxarj2afYWcLteoGVky7D3UKDP9QyrLprQ3VCECoY49yfdDEHGCtMMj92pReUsQ",
       "zpub": "throws:invalid-props"
     }
