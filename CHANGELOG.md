@@ -1,4 +1,4 @@
-## Unreleased
+## 0.3.0
 
 - The two Ledger EVM schemes are reachable: `evmLedgerLive()` returns the fully
   derived leaves at `m/44'/60'/<n>'/0/0` (index other than 0 throws — there is
