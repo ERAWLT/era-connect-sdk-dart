@@ -1505,4 +1505,95 @@ void main() {
       expect(wallet.solana(), hasLength(4));
     });
   });
+
+  /// A Shelley BASE address joins two keys — payment and stake — so it commits
+  /// to both. The layout is `header(1) || blake2b224(payment) ||
+  /// blake2b224(stake)` with header `0x01` (type 0, mainnet), bech32 under
+  /// `addr`, exactly as the firmware's `CardanoAddress.cpp` builds it.
+  ///
+  /// The expectations here are ASSEMBLED FROM PRIMITIVES rather than restated,
+  /// so a change to the header byte, the hash length, the key order or the
+  /// checksum variant fails even though the derived keys come from code tested
+  /// elsewhere.
+  group('Cardano Shelley base addresses', () {
+    final key = Uint8List(32)..fillRange(0, 32, 0x11);
+    final chainCode = Uint8List(32)..fillRange(0, 32, 0x22);
+
+    final wallet = EraAccounts.fromUr(Ur(
+      'crypto-multi-accounts',
+      cborEncode(cbMap([
+        (1, cbUint(0x12345678)),
+        (
+          2,
+          cbArray([
+            cbMap([
+              (3, cbBytes(key)),
+              (4, cbBytes(chainCode)),
+              (
+                6,
+                cbTag(
+                  304,
+                  cbMap([
+                    (
+                      1,
+                      pathComponents([(1852, true), (1815, true), (0, true)])
+                    ),
+                    (2, cbUint(0x33333333)),
+                  ]),
+                )
+              ),
+            ]),
+          ])
+        ),
+      ])),
+    ));
+
+    final ada = wallet.cardano()!;
+
+    /// The address as the spec spells it, built here from byte primitives.
+    String expectedAddress(Uint8List payment, Uint8List stake) {
+      final payload = concatBytes([
+        Uint8List.fromList([0x01]),
+        blake2b(payment, 28),
+        blake2b(stake, 28),
+      ]);
+      return bech32Encode('addr', convertBits(payload, 8, 5, pad: true));
+    }
+
+    test('joins the payment key to the stake key at 2/0', () {
+      expect(ada.deriveAddress(0),
+          expectedAddress(ada.deriveKey(0, 0), ada.deriveKey(2, 0)));
+    });
+
+    test('is 57 bytes under the addr hrp', () {
+      final address = ada.deriveAddress(0);
+      expect(address, startsWith('addr1'));
+      // 57 bytes regrouped to 5-bit words is 92 words, plus hrp and checksum.
+      expect(address.length, 'addr'.length + 1 + 92 + 6);
+    });
+
+    test('change uses role 1 and the SAME stake key', () {
+      final change = ada.deriveAddress(0, change: true);
+      expect(change, isNot(ada.deriveAddress(0)));
+      expect(change, expectedAddress(ada.deriveKey(1, 0), ada.deriveKey(2, 0)));
+    });
+
+    test('walks the receive chain', () {
+      expect(ada.deriveAddress(1), isNot(ada.deriveAddress(0)));
+      expect(ada.deriveAddress(1),
+          expectedAddress(ada.deriveKey(0, 1), ada.deriveKey(2, 0)));
+    });
+
+    test('refuses keys that are not 32 bytes', () {
+      expect(
+        () => derive.cardanoBaseAddress(Uint8List.sublistView(key, 1), key),
+        throwsA(predicate((e) => '$e'.contains('two 32-byte keys'))),
+      );
+    });
+
+    test('both halves matter: swapping them changes the address', () {
+      expect(derive.cardanoBaseAddress(key, chainCode),
+          isNot(derive.cardanoBaseAddress(chainCode, key)));
+    });
+  });
 }

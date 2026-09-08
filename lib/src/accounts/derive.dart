@@ -127,6 +127,30 @@ String btcNestedSegwitAddressFromPublicKey(
 /// Encoding one with the classic recipe produces a well-formed `inj1…` for a
 /// different account entirely, which is why the two live in separate
 /// functions rather than behind a flag.
+/// Cardano Shelley BASE address (`addr1…`): payment key and stake key joined.
+///
+///     header(1) || blake2b224(payment_vkey) || blake2b224(stake_vkey)
+///
+/// The header is `0x01` — address type 0 (base), network id 1 (mainnet) — and
+/// the whole 57 bytes are bech32 (not bech32m) under the HRP `addr`, exactly
+/// as `CardanoAddress.cpp` builds it.
+///
+/// A base address commits to BOTH keys, which is why this takes two: an
+/// address built from the payment key alone is an *enterprise* address, a
+/// different thing that cannot delegate its stake.
+String cardanoBaseAddress(Uint8List paymentKey32, Uint8List stakeKey32) {
+  if (paymentKey32.length != 32 || stakeKey32.length != 32) {
+    throw EraSdkError(
+        'invalid-props', 'cardano base address needs two 32-byte keys');
+  }
+  final payload = concatBytes([
+    Uint8List.fromList([0x01]),
+    blake2b(paymentKey32, 28),
+    blake2b(stakeKey32, 28),
+  ]);
+  return bech32Encode('addr', convertBits(payload, 8, 5, pad: true));
+}
+
 String ethermintAddressFromPublicKey(Uint8List publicKey33, String prefix) {
   final payload = Uint8List.sublistView(
       keccak256(Uint8List.sublistView(_uncompressed(publicKey33), 1)), 12);

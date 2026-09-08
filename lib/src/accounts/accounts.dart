@@ -508,6 +508,16 @@ class CardanoAccountView {
   /// Signing path for `role/index`, e.g. `pathFor(0, 0)` → `.../0/0`.
   String pathFor(int role, int index) => '$accountPath/$role/$index';
 
+  /// The Shelley base address at receive (or [change]) [index].
+  ///
+  /// A base address joins the payment key at `<role>/<index>` to the stake key
+  /// at `2/0`, so it commits to both. The device builds the same 57 bytes.
+  String deriveAddress(int index, {bool change = false}) =>
+      derive.cardanoBaseAddress(
+        deriveKey(change ? 1 : 0, index),
+        deriveKey(2, 0),
+      );
+
   /// Soft-derived 32-byte verification key at `role/index` (0 payment, 1 change, 2 stake).
   Uint8List deriveKey(int role, int index) {
     return derive.cardanoSoftDerivePath(

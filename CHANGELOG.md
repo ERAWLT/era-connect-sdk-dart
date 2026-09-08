@@ -1,5 +1,10 @@
 ## Unreleased
 
+- Cardano addresses: `CardanoAccountView.deriveAddress(i, change: ...)` returns
+  the Shelley base address, and `cardanoBaseAddress(payment, stake)` is
+  exported. `header(1) || blake2b224(payment) || blake2b224(stake)`, bech32
+  under `addr`, matching the firmware.
+
 - `SolanaAccountView.scheme` distinguishes the three derivations the device
   ships (`single`, `account`, `subAccount`), which the firmware separates by
   path depth alone; `solana(scheme: ...)` filters. Before this, three entries

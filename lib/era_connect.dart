@@ -34,6 +34,7 @@ export 'src/accounts/derive.dart'
         btcP2pkhAddressFromPublicKey,
         btcP2wpkhAddressFromPublicKey,
         btcTaprootAddressFromPublicKey,
+        cardanoBaseAddress,
         cosmosAddressFromPublicKey,
         ethermintAddressFromPublicKey,
         evmAddressFromPublicKey,
