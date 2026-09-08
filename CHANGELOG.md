@@ -1,3 +1,27 @@
+## Unreleased
+
+**Behaviour change — `EraAccounts.btc(purpose: 86).deriveAddress()` now returns
+an address instead of throwing.** The SDK used to refuse taproot and tell the
+caller to derive it "from `xpub()` with your Bitcoin library". A consumer did
+exactly that, omitted the BIP-341 tweak, and shipped a Receive screen offering a
+`bc1p…` built from the untweaked internal key — a valid address that no BIP-86
+signer, the ERA device included, can key-path spend.
+
+The witness program is the tweaked output key, never the BIP-32 child key:
+`P = lift_x(x(child))`, `t = tagged("TapTweak", x(P))`, `Q = P + t*G`, program
+`= x(Q)`, encoded as bech32m at witness version 1. `lift_x` always takes the
+even-Y point, so the child key's Y parity is discarded.
+
+- `btcTaprootAddressFromPublicKey(publicKey33, [hrp])` is exported for callers
+  holding a key rather than an account view.
+- `Secp256k1.taprootOutputKey` and `bech32mEncode` are the new primitives; no
+  new dependency — the curve arithmetic was already present for public BIP-32
+  derivation, and bech32m differs from bech32 by one checksum constant.
+- The three published BIP-86 vectors are pinned in `test/taproot_test.dart`.
+
+If you were catching `invalid-props` from `deriveAddress` on a purpose-86 view
+as a supported control-flow path, that catch is now dead code.
+
 ## 0.2.0
 
 **Behaviour change — `EraAccounts.btc(testnet: true)` now selects an account.**
