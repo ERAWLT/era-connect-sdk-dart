@@ -42,6 +42,7 @@ export 'src/accounts/derive.dart'
         p2pkhAddressFromPublicKey,
         solanaAddressFromPublicKey,
         suiAddressFromPublicKey,
+        tonAddressFromPublicKey,
         tronAddressFromPublicKey,
         xrpAddressFromPublicKey;
 export 'src/chains/bch.dart';

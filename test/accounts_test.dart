@@ -1596,4 +1596,48 @@ void main() {
           isNot(derive.cardanoBaseAddress(chainCode, key)));
     });
   });
+
+  /// A TON address is not a hash of the key: it is the hash of the wallet
+  /// CONTRACT the key would deploy, so the recipe involves the V4R2 code
+  /// cell's hash and depth, a data cell of 321 bits, and a StateInit cell with
+  /// two refs.
+  ///
+  /// The vector is the firmware's own device-verified regression case
+  /// (`tests/Basic-tests/test_ton_address_gen.py`): seed `8921ec62…44c9fd`,
+  /// path `m/44'/607'/0'`, address
+  /// `UQBwluCEV9BhNqgIRETT4reunDpTDDotShNuKeTbst9Bdn8N`. The public key below
+  /// is that path's key, derived independently by a stdlib SLIP-0010 +
+  /// RFC-8032 implementation that reproduces the same address end to end.
+  group('TON wallet addresses', () {
+    final publicKey = hexToBytes(
+        '0d1a1f413eed4d02e7abbc5139a1e0446cd807d7692d43c294e50925782f25b2');
+    const expected = 'UQBwluCEV9BhNqgIRETT4reunDpTDDotShNuKeTbst9Bdn8N';
+
+    test('matches the address the device shows for the same key', () {
+      expect(derive.tonAddressFromPublicKey(publicKey), expected);
+    });
+
+    test('is the 48-character non-bounceable friendly form by default', () {
+      final address = derive.tonAddressFromPublicKey(publicKey);
+      expect(address, hasLength(48));
+      expect(address, startsWith('UQ'));
+    });
+
+    test('bounceable is the same account under a different tag', () {
+      final bounceable =
+          derive.tonAddressFromPublicKey(publicKey, bounceable: true);
+      expect(bounceable, startsWith('EQ'));
+      expect(bounceable, isNot(expected));
+      // Same 32-byte account id, different tag byte and therefore checksum.
+      expect(bounceable.substring(2, 44), expected.substring(2, 44));
+    });
+
+    test('refuses anything but a 32-byte ed25519 key', () {
+      expect(
+        () => derive.tonAddressFromPublicKey(
+            Uint8List.sublistView(publicKey, 1)),
+        throwsA(predicate((e) => '$e'.contains('32-byte ed25519 key'))),
+      );
+    });
+  });
 }

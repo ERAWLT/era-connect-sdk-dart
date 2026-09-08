@@ -481,6 +481,15 @@ class TonAccountView {
 
   /// The account label (`name`, falling back to `note`), when present.
   String? get name => _entry.name ?? _entry.note;
+  /// The V4R2 wallet address — the contract this key would deploy, not a hash
+  /// of the key itself. Non-bounceable (`UQ…`) by default, which is the form a
+  /// wallet shows for receiving.
+  String get address => derive.tonAddressFromPublicKey(publicKey);
+
+  /// The same account under the bounceable tag (`EQ…`).
+  String get bounceableAddress =>
+      derive.tonAddressFromPublicKey(publicKey, bounceable: true);
+
 }
 
 /// Cardano view (CIP-1852): the exported account key supports SOFT public

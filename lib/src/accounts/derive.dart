@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:typed_data';
 
 import '../chains/cashaddr.dart';
@@ -138,6 +139,101 @@ String btcNestedSegwitAddressFromPublicKey(
 /// A base address commits to BOTH keys, which is why this takes two: an
 /// address built from the payment key alone is an *enterprise* address, a
 /// different thing that cannot delegate its stake.
+/// TON wallet address (`UQ…`) for the V4R2 contract — the version every ERA
+/// export ships.
+///
+/// A TON address is not a hash of the key: it is the hash of the wallet
+/// CONTRACT the key would deploy. `StateInit{code, data}` is a cell with two
+/// refs, its representation hash is the account id, and the friendly form is
+/// `tag || workchain || account_id || crc16`, base64url.
+///
+/// The code cell never varies, so only its hash and depth are needed rather
+/// than the whole BOC — the same two constants the firmware carries.
+///
+/// V5R1 is deliberately absent: the firmware declares it, but no wallet-link
+/// profile exports it (every one clamps TON to derivation index 0), so an
+/// implementation here could not be exercised against a real export.
+String tonAddressFromPublicKey(
+  Uint8List publicKey32, {
+  bool bounceable = false,
+  int workchain = 0,
+}) {
+  if (publicKey32.length != 32) {
+    throw EraSdkError('invalid-props', 'TON needs a 32-byte ed25519 key');
+  }
+  // seqno(32) || wallet_id(32) || pubkey(256) || plugins(1) = 321 bits.
+  final data = Uint8List(41);
+  ByteData.sublistView(data).setUint32(4, _tonV4R2WalletId, Endian.big);
+  data.setAll(8, publicKey32);
+  final dataHash = _tonCellHash(data, 321, const []);
+  final accountId = _tonCellHash(
+    Uint8List.fromList([0x30]),
+    5,
+    [
+      (_tonV4R2CodeHash, _tonV4R2CodeDepth),
+      (dataHash, 0),
+    ],
+  );
+
+  final raw = Uint8List(36);
+  raw[0] = bounceable ? 0x11 : 0x51;
+  raw[1] = workchain & 0xff;
+  raw.setAll(2, accountId);
+  final crc = _tonCrc16(Uint8List.sublistView(raw, 0, 34));
+  raw[34] = crc >> 8;
+  raw[35] = crc & 0xff;
+  return base64Url.encode(raw).replaceAll('=', '');
+}
+
+const int _tonV4R2WalletId = 698983191;
+const int _tonV4R2CodeDepth = 7;
+final Uint8List _tonV4R2CodeHash = hexToBytes(
+    'feb5ff6820e2ff0d9483e7e0d62c817d846789fb4ae580c878866d959dabd5c0');
+
+/// The representation hash of one cell: `d1 || d2 || data || ref depths ||
+/// ref hashes`, sha256. `d1` counts refs, `d2` encodes the data length in
+/// half-bytes, and a cell whose bit count is not a multiple of eight carries a
+/// trailing 1 bit followed by zeros — the "completion tag".
+Uint8List _tonCellHash(
+  Uint8List data,
+  int bits,
+  List<(Uint8List, int)> refs,
+) {
+  final byteLength = (bits + 7) ~/ 8;
+  final incomplete = bits % 8 != 0;
+  final body = Uint8List.fromList(data.sublist(0, byteLength));
+  if (incomplete) {
+    final shift = 7 - (bits % 8);
+    body[byteLength - 1] =
+        (body[byteLength - 1] | (1 << shift)) & ((0xff << shift) & 0xff);
+  }
+  final depths = Uint8List(refs.length * 2);
+  for (var i = 0; i < refs.length; i++) {
+    depths[i * 2] = refs[i].$2 >> 8;
+    depths[i * 2 + 1] = refs[i].$2 & 0xff;
+  }
+  return sha256(concatBytes([
+    Uint8List.fromList([refs.length, byteLength * 2 - (incomplete ? 1 : 0)]),
+    body,
+    depths,
+    for (final ref in refs) ref.$1,
+  ]));
+}
+
+/// CRC16-CCITT (XModem), TON's address checksum.
+int _tonCrc16(Uint8List data) {
+  var crc = 0;
+  for (final byte in data) {
+    crc ^= byte << 8;
+    for (var i = 0; i < 8; i++) {
+      crc = (crc & 0x8000) != 0
+          ? ((crc << 1) ^ 0x1021) & 0xffff
+          : (crc << 1) & 0xffff;
+    }
+  }
+  return crc;
+}
+
 String cardanoBaseAddress(Uint8List paymentKey32, Uint8List stakeKey32) {
   if (paymentKey32.length != 32 || stakeKey32.length != 32) {
     throw EraSdkError(
