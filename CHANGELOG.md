@@ -1,5 +1,12 @@
 ## Unreleased
 
+- The Cosmos family is addressable: `cosmosChains` is the 33-zone registry from
+  the firmware's `CosmosCoinInfo`, `cosmos('kava')` resolves a zone's own coin
+  type, `availableCosmosChains()` lists what an export can serve, and
+  `deriveAddress(i, chain: ...)` picks hashing as well as HRP. Ethermint
+  (Injective, Evmos, Dymension) is served by the EVM account through
+  `ethermintAddressFromPublicKey` — keccak payload, not `hash160`.
+
 - Litecoin, Dogecoin and Dash are classified (coin types 2', 3', 5') and
   addressable through `litecoin()`, `dogecoin()`, `dash()` returning a
   `UtxoAccountView`. Version bytes come from the firmware's `CoinInfo`: LTC

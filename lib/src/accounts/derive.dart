@@ -119,6 +119,20 @@ String btcNestedSegwitAddressFromPublicKey(
 ]) =>
     nestedSegwitAddressFromPublicKey(publicKey33, testnet ? 0xc4 : 0x05);
 
+/// Ethermint bech32 address (Injective, Evmos, Dymension).
+///
+/// These zones are EVM keys wearing a Cosmos coat: the payload is the
+/// ETHEREUM address — `keccak256(uncompressed[1..])[-20:]` — under the zone's
+/// own HRP, NOT the `sha256+ripemd160` hash every other Cosmos chain uses.
+/// Encoding one with the classic recipe produces a well-formed `inj1…` for a
+/// different account entirely, which is why the two live in separate
+/// functions rather than behind a flag.
+String ethermintAddressFromPublicKey(Uint8List publicKey33, String prefix) {
+  final payload = Uint8List.sublistView(
+      keccak256(Uint8List.sublistView(_uncompressed(publicKey33), 1)), 12);
+  return bech32Encode(prefix, convertBits(payload, 8, 5, pad: true));
+}
+
 /// Cosmos bech32 address: plain bech32 of the 20-byte hash160, with NO
 /// witness-version prefix (that is a segwit thing, not a Cosmos one). Every
 /// zone carries its own HRP over the same key, so [prefix] is the caller's.
