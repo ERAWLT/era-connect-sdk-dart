@@ -1440,4 +1440,69 @@ void main() {
           isNot(inj.deriveAddress(0)));
     });
   });
+
+  /// The device ships all three Solana derivations, and the firmware tells
+  /// them apart by PATH DEPTH alone — all three carry the same
+  /// `Derivation::Solana`. Read `index` without `scheme` and three different
+  /// accounts all claim to be number 0.
+  group('Solana derivation schemes', () {
+    CborValue solEntry(List<(int, bool)> levels, int keyByte) => cbMap([
+          (3, cbBytes(Uint8List(32)..fillRange(0, 32, keyByte))),
+          (
+            6,
+            cbTag(
+              304,
+              cbMap([(1, pathComponents(levels)), (2, cbUint(0x11111111))]),
+            )
+          ),
+        ]);
+
+    final wallet = EraAccounts.fromUr(Ur(
+      'crypto-multi-accounts',
+      cborEncode(cbMap([
+        (1, cbUint(0x12345678)),
+        (
+          2,
+          cbArray([
+            solEntry([(44, true), (501, true)], 0x01),
+            solEntry([(44, true), (501, true), (0, true)], 0x02),
+            solEntry([(44, true), (501, true), (0, true), (0, true)], 0x03),
+            solEntry([(44, true), (501, true), (1, true)], 0x04),
+          ])
+        ),
+      ])),
+    ));
+
+    test('three entries claim index 0 — the scheme is what separates them', () {
+      final zero = wallet.solana().where((v) => v.index == 0).toList();
+      expect(zero, hasLength(3));
+      expect(zero.map((v) => v.scheme).toList(), [
+        SolanaScheme.single,
+        SolanaScheme.account,
+        SolanaScheme.subAccount,
+      ]);
+      expect(zero.map((v) => v.address).toSet(), hasLength(3));
+    });
+
+    test('reads the scheme off the path depth', () {
+      final byPath = {for (final v in wallet.solana()) v.path: v.scheme};
+      expect(byPath["m/44'/501'"], SolanaScheme.single);
+      expect(byPath["m/44'/501'/0'"], SolanaScheme.account);
+      expect(byPath["m/44'/501'/0'/0'"], SolanaScheme.subAccount);
+      expect(byPath["m/44'/501'/1'"], SolanaScheme.account);
+    });
+
+    test('filters to one scheme, which is what a wallet actually wants', () {
+      final accounts = wallet.solana(scheme: SolanaScheme.account);
+      expect(accounts.map((v) => v.path).toList(),
+          ["m/44'/501'/0'", "m/44'/501'/1'"]);
+      expect(accounts.map((v) => v.index).toList(), [0, 1]);
+      expect(wallet.solana(scheme: SolanaScheme.single), hasLength(1));
+      expect(wallet.solana(scheme: SolanaScheme.subAccount), hasLength(1));
+    });
+
+    test('an unfiltered list is still every key the export shipped', () {
+      expect(wallet.solana(), hasLength(4));
+    });
+  });
 }

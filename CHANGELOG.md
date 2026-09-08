@@ -1,5 +1,10 @@
 ## Unreleased
 
+- `SolanaAccountView.scheme` distinguishes the three derivations the device
+  ships (`single`, `account`, `subAccount`), which the firmware separates by
+  path depth alone; `solana(scheme: ...)` filters. Before this, three entries
+  all reported `index` 0 with three different addresses.
+
 - The Cosmos family is addressable: `cosmosChains` is the 33-zone registry from
   the firmware's `CosmosCoinInfo`, `cosmos('kava')` resolves a zone's own coin
   type, `availableCosmosChains()` lists what an export can serve, and
