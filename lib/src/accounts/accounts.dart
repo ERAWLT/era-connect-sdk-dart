@@ -592,11 +592,31 @@ class EraAccounts {
   /// The EVM account (standard `m/44'/60'/...` scheme), if the export carries one.
   EvmAccountView? evm() {
     final entry = _find((e) =>
-            _classify(e.path) == AccountChain.evm &&
+            _isEvmAccount(e) &&
             (e.note == null || e.note == 'account.standard')) ??
-        _find((e) => _classify(e.path) == AccountChain.evm);
+        _find(_isEvmAccount);
     return entry == null ? null : EvmAccountView(entry, _resolveXfp(entry));
   }
+
+  /// An EVM ACCOUNT, as opposed to anything else that starts `m/44'/60'`.
+  ///
+  /// [_classify] reads only the first two path levels, and three different
+  /// things share those: the standard account `m/44'/60'/<account>'` (depth 3),
+  /// the Ledger Live entries `m/44'/60'/<n>'/0/0` (depth 5, fully derived
+  /// leaves) and the Ethermint keys that Injective, Evmos and Dymension are
+  /// exported under, which sit at `m/44'/60'/0'/0/0` and carry no chain code.
+  ///
+  /// Without this, [evm] could hand back one of those leaves — and a view over
+  /// a leaf reports a leaf path as its account path and derives two levels
+  /// BELOW it, producing a real key at a nonsense path. A wrong address that
+  /// looks entirely plausible is the worst failure this SDK can have.
+  ///
+  /// Depth is the whole test. Key material deliberately is NOT: an entry with
+  /// no public key and no chain code still resolves its xfp for signing, which
+  /// is reference behaviour, and the derivation path already refuses such an
+  /// entry with a typed error.
+  static bool _isEvmAccount(RawAccountEntry e) =>
+      _classify(e.path) == AccountChain.evm && e.path.length == 3;
 
   /// A Bitcoin account view. Defaults to the BIP-84 native-segwit account;
   /// pass `purpose: 44` for legacy P2PKH, 49 for nested segwit, 86 for

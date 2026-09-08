@@ -1126,4 +1126,63 @@ void main() {
       expect(accounts.xfpFor(tron['accountPath'] as String), tron['xfp']);
     });
   });
+
+  /// [_classify] reads only the first two path levels, and three different
+  /// things start `m/44'/60'`: the account itself, the Ledger Live leaves, and
+  /// the Ethermint keys Injective / Evmos / Dymension are exported under. A
+  /// view built over a leaf reports the leaf as its account path and derives
+  /// two levels below it — a real key at a nonsense path, which is a wrong
+  /// address that looks entirely plausible.
+  group('evm() answers with an ACCOUNT, never a leaf under it', () {
+    final master = TestHdNode.fromMasterSeed(testSeed);
+
+    CborValue entryAt(List<(int, bool)> levels, int xfp) {
+      final node = master.derivePath(levels);
+      return cbMap([
+        (3, cbBytes(node.publicKey)),
+        (4, cbBytes(node.chainCode)),
+        (
+          6,
+          cbTag(
+            304,
+            cbMap([
+              (1, pathComponents(levels)),
+              (2, cbUint(xfp)),
+            ]),
+          )
+        ),
+      ]);
+    }
+
+    EraAccounts walletOf(List<CborValue> entries) => EraAccounts.fromUr(Ur(
+          'crypto-multi-accounts',
+          cborEncode(cbMap([
+            (1, cbUint(master.fingerprint)),
+            (2, cbArray(entries)),
+          ])),
+        ));
+
+    const leaf = [(44, true), (60, true), (0, true), (0, false), (0, false)];
+    const account = [(44, true), (60, true), (0, true)];
+
+    test('an Ethermint-shaped leaf alone is not an EVM account', () {
+      expect(walletOf([entryAt(leaf, 0x55555555)]).evm(), isNull);
+    });
+
+    test('a Ledger Live leaf never shadows the real account', () {
+      final accounts = walletOf([
+        entryAt(leaf, 0x55555555),
+        entryAt(account, 0x66666666),
+      ]);
+      final view = accounts.evm()!;
+      expect(view.accountPath, "m/44'/60'/0'");
+      // The address the account really answers, derived at m/44'/60'/0'/0/0 —
+      // exactly where the leaf sits, so a view over the leaf would have
+      // derived m/44'/60'/0'/0/0/0/0 and answered something else.
+      expect(
+        view.deriveAddress(0),
+        derive.evmAddressFromPublicKey(master.derivePath(leaf).publicKey),
+      );
+    });
+  });
 }
