@@ -134,17 +134,13 @@ void main() {
       expect(accounts.btc(purpose: 49, testnet: true), isNull);
     });
 
-    test('btc purpose 86 (taproot: xpub only, addresses refused)', () {
+    test('btc purpose 86 (taproot: tweaked output key, zpub still refused)',
+        () {
       final want = views['btc86'] as Map<String, dynamic>;
       final btc = accounts.btc(purpose: 86)!;
       expect(btc.xfp, want['xfp']);
       expect(btc.xpub(), want['xpub']);
-      expect(want['deriveAddress0'], 'throws:invalid-props');
-      expect(
-        () => btc.deriveAddress(0),
-        throwsA(
-            isA<EraSdkError>().having((e) => e.code, 'code', 'invalid-props')),
-      );
+      expect(btc.deriveAddress(0), want['deriveAddress0']);
       expect(
         () => btc.zpub(),
         throwsA(

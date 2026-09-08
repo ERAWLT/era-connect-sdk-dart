@@ -37,7 +37,7 @@ void main() {
   // that is what this catches. The sibling's formatter DOES cover JSON and
   // therefore excludes this path in its config, for this reason.
   const sharedFixtureSha256 =
-      'c754db2221e3758258b0b9b9e9b84a4fc6b3478d2e81fa44760aa251fef7822d';
+      '75e6fb9ba19211d95dd2d72cceef6ce904e21491d7a7fdb07e3c6ffbefb0d835';
 
   final fixtureFile = File('test/fixtures/parity/accounts-testnet.json');
   final fixtureBytes = fixtureFile.readAsBytesSync();
@@ -177,14 +177,8 @@ void main() {
         }
 
         if (want['deriveAddress'] == 'throws:invalid-props') {
-          expect(receive, isEmpty);
-          expect(change0, isNull);
-          const message =
-              'taproot addresses need the BIP-341 output-key tweak; '
-              'derive them from xpub() with your Bitcoin library';
-          expect(() => btc.deriveAddress(0), throwsInvalidProps(message));
-          expect(() => btc.deriveAddress(0, change: true),
-              throwsInvalidProps(message));
+          fail('no account in the shared fixture refuses deriveAddress any '
+              'more — delete this branch rather than leaving it unreachable');
         } else {
           expect(want['deriveAddress'], 'supported');
           expect(receive, isNotEmpty);

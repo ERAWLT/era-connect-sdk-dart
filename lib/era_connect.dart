@@ -33,10 +33,17 @@ export 'src/accounts/derive.dart'
         btcNestedSegwitAddressFromPublicKey,
         btcP2pkhAddressFromPublicKey,
         btcP2wpkhAddressFromPublicKey,
+        btcTaprootAddressFromPublicKey,
+        cardanoBaseAddress,
         cosmosAddressFromPublicKey,
+        derivePublicKeyChild,
+        ethermintAddressFromPublicKey,
         evmAddressFromPublicKey,
+        nestedSegwitAddressFromPublicKey,
+        p2pkhAddressFromPublicKey,
         solanaAddressFromPublicKey,
         suiAddressFromPublicKey,
+        tonAddressFromPublicKey,
         tronAddressFromPublicKey,
         xrpAddressFromPublicKey;
 export 'src/chains/bch.dart';

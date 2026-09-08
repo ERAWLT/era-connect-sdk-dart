@@ -4,6 +4,7 @@ import 'package:pointycastle/ecc/api.dart';
 import 'package:pointycastle/ecc/curves/secp256k1.dart';
 
 import '../core/bytes.dart';
+import 'digests.dart';
 
 /// secp256k1 verification and public-key recovery, hand-rolled on the curve
 /// primitives so the rules are explicit rather than inherited — including
@@ -124,6 +125,32 @@ class Secp256k1 {
       throw ArgumentError('recovered point at infinity');
     }
     return Uint8List.fromList(q.getEncoded(true));
+  }
+
+  /// BIP-341 output key for a key-path-only taproot output: lift the x
+  /// coordinate to the even-Y point, add `tagged("TapTweak", x)*G`, and return
+  /// the 32-byte x of the result.
+  ///
+  /// The Y parity of the caller's key is deliberately discarded — BIP-340
+  /// `lift_x` always takes the even-Y point, so `02||x` and `03||x` tweak to
+  /// the same output. Forgetting that negation is the classic way to get a
+  /// taproot address that is wrong for exactly half of all keys.
+  static Uint8List taprootOutputKey(Uint8List xOnly32) {
+    if (xOnly32.length != 32) {
+      throw ArgumentError('taproot internal key must be 32 bytes');
+    }
+    final internal = _decompress(bytesToBigint(xOnly32), 0);
+    final tweak = bytesToBigint(taggedHash('TapTweak', xOnly32));
+    if (tweak >= order) {
+      // ~2^-128; an explicit refusal beats an opaque failure inside the curve.
+      throw ArgumentError('taproot tweak is out of range for this key');
+    }
+    final output = (internal + (_domain.G * tweak)!)!;
+    final x = output.x!.toBigInteger()!;
+    final out = Uint8List(32);
+    final bytes = bigintToBytes(x);
+    out.setAll(32 - bytes.length, bytes);
+    return out;
   }
 
   static ECPoint _decompress(BigInt x, int yParity) {

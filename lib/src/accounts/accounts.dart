@@ -26,6 +26,16 @@ enum AccountChain {
   /// `m/44'/145'` — Bitcoin Cash.
   bch,
 
+  /// `m/84'|49'|44'/2'` — Litecoin. Unlike coin type 1', coin type 2' is
+  /// unambiguous, so attribution needs no caller intent.
+  litecoin,
+
+  /// `m/44'/3'` — Dogecoin.
+  dogecoin,
+
+  /// `m/44'/5'` — Dash.
+  dash,
+
   /// `m/44'/501'` — Solana.
   solana,
 
@@ -115,12 +125,23 @@ AccountChain _classify(List<PathLevel> path) {
     return AccountChain.btc;
   }
   if (p0.index == 44 && p1.index == 145) return AccountChain.bch;
+  if (p1.index == 2 && (p0.index == 84 || p0.index == 49 || p0.index == 44)) {
+    return AccountChain.litecoin;
+  }
+  if (p0.index == 44 && p1.index == 3) return AccountChain.dogecoin;
+  if (p0.index == 44 && p1.index == 5) return AccountChain.dash;
   if (p0.index == 44 && p1.index == 501) return AccountChain.solana;
   if (p0.index == 44 && p1.index == 195) return AccountChain.tron;
   if (p0.index == 44 && p1.index == 607) return AccountChain.ton;
   if (p0.index == 1852 && p1.index == 1815) return AccountChain.cardano;
   if (p0.index == 44 && p1.index == 784) return AccountChain.sui;
-  if (p0.index == 44 && p1.index == 118) return AccountChain.cosmos;
+  // The non-118 Cosmos zones, each on its own SLIP-44 coin type. The
+  // Ethermint zones are deliberately absent: they sit on `m/44'/60'` and stay
+  // classified as [AccountChain.evm], because that is what their key is —
+  // `cosmos('injective')` reaches them through the EVM account.
+  if (p0.index == 44 && _cosmosSlip44.contains(p1.index)) {
+    return AccountChain.cosmos;
+  }
   if (p0.index == 44 && p1.index == 144) return AccountChain.xrp;
   return AccountChain.unknown;
 }
@@ -248,10 +269,8 @@ class BtcAccountView {
       case 49:
         return derive.btcNestedSegwitAddressFromPublicKey(child, _testnet);
       case 86:
-        throw EraSdkError(
-          'invalid-props',
-          'taproot addresses need the BIP-341 output-key tweak; derive them from xpub() with your Bitcoin library',
-        );
+        return derive.btcTaprootAddressFromPublicKey(
+            child, _testnet ? 'tb' : 'bc');
       default:
         throw EraSdkError('invalid-props', 'unsupported BIP purpose $purpose');
     }
@@ -305,6 +324,143 @@ class TronAccountView {
 }
 
 /// Bitcoin Cash view: `m/44'/145'/0'`, CashAddr P2PKH addresses.
+/// An EVM account under one of Ledger's two alternative schemes.
+///
+/// The device exports three EVM derivations, and [EraAccounts.evm] answers
+/// only the standard one. These two were invisible: `ledgerLive` ships ten
+/// fully derived leaves at `m/44'/60'/<n>'/0/0` — one key per account, nothing
+/// to derive further — while `ledgerLegacy` is an account whose addresses sit
+/// ONE level below it, at `m/44'/60'/0'/<index>`, not two.
+enum EvmLedgerScheme { ledgerLive, ledgerLegacy }
+
+class EvmLedgerAccountView {
+  EvmLedgerAccountView(this._entry, this._resolvedXfp, this.scheme);
+
+  final RawAccountEntry _entry;
+  final int _resolvedXfp;
+  final EvmLedgerScheme scheme;
+
+  String get xfp => xfpToHex(_resolvedXfp);
+
+  /// The exported path: an account for `ledgerLegacy`, a leaf for
+  /// `ledgerLive`.
+  String get path => formatPath(_entry.path);
+
+  /// `ledgerLive`: the address of the exported key itself, which is all the
+  /// export carries. `ledgerLegacy`: the address at `<account>/<index>`.
+  String deriveAddress([int index = 0]) {
+    if (scheme == EvmLedgerScheme.ledgerLive) {
+      if (index != 0) {
+        throw EraSdkError(
+            'invalid-props',
+            'a Ledger Live entry is one already-derived key; ask for another '
+                'entry, not another index');
+      }
+      return derive.evmAddressFromPublicKey(_requireKey(_entry, 33));
+    }
+    return derive.evmAddressFromPublicKey(derive.derivePublicKeyChild(
+        _requireKey(_entry, 33), _withChainCode(_entry), index));
+  }
+}
+
+/// The Bitcoin-like altcoins, which differ only in constants.
+enum UtxoChain { litecoin, dogecoin, dash }
+
+class _UtxoChainParams {
+  const _UtxoChainParams({
+    required this.p2pkh,
+    required this.p2sh,
+    required this.purposes,
+    this.hrp,
+  });
+
+  /// base58check version byte for P2PKH — Litecoin 48 ("L"), Doge 30 ("D"),
+  /// Dash 76 ("X").
+  final int p2pkh;
+
+  /// base58check version byte for P2SH — Litecoin 50 ("M"), Doge 22, Dash 16.
+  final int p2sh;
+
+  /// Segwit HRP, where the chain has segwit at all.
+  final String? hrp;
+
+  /// BIP purposes the chain's derivation vector declares, best first.
+  final List<int> purposes;
+}
+
+/// Taken from each coin's `CoinInfo` in the firmware, not from a registry:
+/// these version bytes are the only thing separating one chain's addresses
+/// from another's, so they are pinned to the device that produces the keys.
+const Map<UtxoChain, _UtxoChainParams> _utxoChains = {
+  UtxoChain.litecoin:
+      _UtxoChainParams(p2pkh: 48, p2sh: 50, hrp: 'ltc', purposes: [84, 49, 44]),
+  UtxoChain.dogecoin: _UtxoChainParams(p2pkh: 30, p2sh: 22, purposes: [44]),
+  UtxoChain.dash: _UtxoChainParams(p2pkh: 76, p2sh: 16, purposes: [44]),
+};
+
+AccountChain _chainOf(UtxoChain chain) => switch (chain) {
+      UtxoChain.litecoin => AccountChain.litecoin,
+      UtxoChain.dogecoin => AccountChain.dogecoin,
+      UtxoChain.dash => AccountChain.dash,
+    };
+
+/// A Litecoin, Dogecoin or Dash account.
+///
+/// The SDK signed PSBTs for these three long before it could name an address
+/// for them: [_classify] returned [AccountChain.unknown] and there was no
+/// view, so a caller holding a perfectly good Litecoin account had no way to
+/// ask this SDK where to receive. The encoding is the same machinery Bitcoin
+/// already uses, under different version bytes.
+class UtxoAccountView {
+  UtxoAccountView(this._entry, this._resolvedXfp, this.chain);
+
+  final RawAccountEntry _entry;
+  final int _resolvedXfp;
+  final UtxoChain chain;
+
+  _UtxoChainParams get _params => _utxoChains[chain]!;
+
+  /// The BIP purpose this account was exported under — 84, 49 or 44.
+  int get purpose => _entry.path[0].index;
+
+  String get xfp => xfpToHex(_resolvedXfp);
+
+  String get accountPath => formatPath(_entry.path);
+
+  String receivePath(int index) => '$accountPath/0/$index';
+
+  String changePath(int index) => '$accountPath/1/$index';
+
+  Uint8List derivePublicKey(int index, {bool change = false}) =>
+      derive.derivePublicKey(
+        _requireKey(_entry, 33),
+        _withChainCode(_entry),
+        change ? 1 : 0,
+        index,
+      );
+
+  /// The address at receive (or [change]) [index], in this account's script
+  /// type.
+  String deriveAddress(int index, {bool change = false}) {
+    final child = derivePublicKey(index, change: change);
+    final params = _params;
+    final hrp = params.hrp;
+    if (purpose == 84 && hrp != null) {
+      return derive.btcP2wpkhAddressFromPublicKey(child, hrp);
+    }
+    if (purpose == 49) {
+      return derive.nestedSegwitAddressFromPublicKey(child, params.p2sh);
+    }
+    if (purpose == 44) {
+      return derive.p2pkhAddressFromPublicKey(child, params.p2pkh);
+    }
+    throw EraSdkError('invalid-props',
+        '${chain.name} has no address encoding for BIP purpose $purpose');
+  }
+
+  String xpub() => _extendedKeyOf(_entry);
+}
+
 class BchAccountView {
   BchAccountView(this._entry, this._resolvedXfp);
 
@@ -363,6 +519,15 @@ class TonAccountView {
 
   /// The account label (`name`, falling back to `note`), when present.
   String? get name => _entry.name ?? _entry.note;
+
+  /// The V4R2 wallet address — the contract this key would deploy, not a hash
+  /// of the key itself. Non-bounceable (`UQ…`) by default, which is the form a
+  /// wallet shows for receiving.
+  String get address => derive.tonAddressFromPublicKey(publicKey);
+
+  /// The same account under the bounceable tag (`EQ…`).
+  String get bounceableAddress =>
+      derive.tonAddressFromPublicKey(publicKey, bounceable: true);
 }
 
 /// Cardano view (CIP-1852): the exported account key supports SOFT public
@@ -389,6 +554,16 @@ class CardanoAccountView {
 
   /// Signing path for `role/index`, e.g. `pathFor(0, 0)` → `.../0/0`.
   String pathFor(int role, int index) => '$accountPath/$role/$index';
+
+  /// The Shelley base address at receive (or [change]) [index].
+  ///
+  /// A base address joins the payment key at `<role>/<index>` to the stake key
+  /// at `2/0`, so it commits to both. The device builds the same 57 bytes.
+  String deriveAddress(int index, {bool change = false}) =>
+      derive.cardanoBaseAddress(
+        deriveKey(change ? 1 : 0, index),
+        deriveKey(2, 0),
+      );
 
   /// Soft-derived 32-byte verification key at `role/index` (0 payment, 1 change, 2 stake).
   Uint8List deriveKey(int role, int index) {
@@ -423,6 +598,11 @@ class SuiAccountView {
 /// Solana view: Ed25519 has no public child derivation, so the device
 /// pre-derives hardened accounts (`m/44'/501'/idx'`) and each entry IS a
 /// signer. The public key, base58, IS the address.
+/// The three Solana derivation schemes, told apart by path depth:
+/// `single` = `m/44'/501'`, `account` = `m/44'/501'/<n>'`,
+/// `subAccount` = `m/44'/501'/<n>'/0'`.
+enum SolanaScheme { single, account, subAccount }
+
 class SolanaAccountView {
   SolanaAccountView(this._entry, this._resolvedXfp);
 
@@ -435,7 +615,22 @@ class SolanaAccountView {
   /// The signer's full derivation path.
   String get path => formatPath(_entry.path);
 
-  /// The hardened account index (third path level).
+  /// Which of the three Solana derivation schemes this entry belongs to.
+  ///
+  /// The firmware declares all three under the same `Derivation::Solana` and
+  /// distinguishes them by PATH DEPTH alone — "Single Account Path"
+  /// `m/44'/501'`, "Account-based Path" `m/44'/501'/<n>'`, and "Sub-account
+  /// Path" `m/44'/501'/<n>'/0'`. Without this, three entries all report index
+  /// 0 with three different addresses, and two entries report each of 1..4.
+  SolanaScheme get scheme => switch (_entry.path.length) {
+        2 => SolanaScheme.single,
+        3 => SolanaScheme.account,
+        _ => SolanaScheme.subAccount,
+      };
+
+  /// The hardened account index (third path level), 0 for the single-account
+  /// path which has no such level. Unique only WITHIN a scheme — read it
+  /// together with [scheme].
   int get index => _entry.path.length > 2 ? _entry.path[2].index : 0;
 
   /// The 32-byte Ed25519 public key.
@@ -454,11 +649,94 @@ class SolanaAccountView {
 /// Ethermint zones (Injective, Evmos, Dymension, ...) are the exception: they
 /// sign with `m/44'/60'` keys, so they come back as the EVM account, not this
 /// one.
+/// One Cosmos SDK zone, as the firmware's `CosmosCoinInfo` table declares it.
+class CosmosChainInfo {
+  const CosmosChainInfo(this.id, this.hrp, this.slip44,
+      {this.ethermint = false});
+
+  /// Stable lowercase id, e.g. `osmosis`, `terra-classic`.
+  final String id;
+
+  /// bech32 human-readable part, e.g. `osmo`.
+  final String hrp;
+
+  /// SLIP-44 coin type the zone's account is derived under.
+  final int slip44;
+
+  /// True for Injective, Evmos and Dymension: EVM keys wearing a Cosmos coat.
+  /// Their account sits at `m/44'/60'` and the bech32 payload is the ETHEREUM
+  /// address, not the `sha256+ripemd160` hash every other zone uses.
+  final bool ethermint;
+}
+
+/// Every Cosmos zone the device can export a key for, transcribed from
+/// `CosmosCoinInfo.cpp`. Twenty-four of them share SLIP-44 118, so the export
+/// carries ONE key for all of them and the HRP is what separates the
+/// addresses — enumerate this table, never the export's entries, or a caller
+/// sees two dozen identical rows.
+const List<CosmosChainInfo> cosmosChains = [
+  CosmosChainInfo('cosmos', 'cosmos', 118),
+  CosmosChainInfo('osmosis', 'osmo', 118),
+  CosmosChainInfo('celestia', 'celestia', 118),
+  CosmosChainInfo('juno', 'juno', 118),
+  CosmosChainInfo('akash', 'akash', 118),
+  CosmosChainInfo('stride', 'stride', 118),
+  CosmosChainInfo('axelar', 'axelar', 118),
+  CosmosChainInfo('neutron', 'neutron', 118),
+  CosmosChainInfo('dydx', 'dydx', 118),
+  CosmosChainInfo('noble', 'noble', 118),
+  CosmosChainInfo('sei', 'sei', 118),
+  CosmosChainInfo('kujira', 'kujira', 118),
+  CosmosChainInfo('stargaze', 'stars', 118),
+  CosmosChainInfo('agoric', 'agoric', 118),
+  CosmosChainInfo('secret', 'secret', 529),
+  CosmosChainInfo('cronos', 'cro', 394),
+  CosmosChainInfo('kava', 'kava', 459),
+  CosmosChainInfo('terra', 'terra', 330),
+  CosmosChainInfo('thorchain', 'thor', 931),
+  CosmosChainInfo('injective', 'inj', 60, ethermint: true),
+  CosmosChainInfo('evmos', 'evmos', 60, ethermint: true),
+  CosmosChainInfo('dymension', 'dym', 60, ethermint: true),
+  CosmosChainInfo('babylon', 'bbn', 118),
+  CosmosChainInfo('neutaro', 'neutaro', 118),
+  CosmosChainInfo('terra-classic', 'terra', 330),
+  CosmosChainInfo('shentu', 'shentu', 118),
+  CosmosChainInfo('persistence', 'persistence', 118),
+  CosmosChainInfo('sommelier', 'somm', 118),
+  CosmosChainInfo('irisnet', 'iaa', 118),
+  CosmosChainInfo('regen', 'regen', 118),
+  CosmosChainInfo('umee', 'umee', 118),
+  CosmosChainInfo('quicksilver', 'quick', 118),
+  CosmosChainInfo('gravity-bridge', 'gravity', 118),
+];
+
+final Map<String, CosmosChainInfo> _cosmosById = {
+  for (final c in cosmosChains) c.id: c,
+};
+
+/// Coin types that mean "a Cosmos account", Ethermint's 60 excluded.
+final Set<int> _cosmosSlip44 = {
+  for (final c in cosmosChains)
+    if (!c.ethermint) c.slip44,
+};
+
+/// Look up a zone by id, or throw with the id that was not found.
+CosmosChainInfo cosmosChain(String id) {
+  final found = _cosmosById[id];
+  if (found == null) {
+    throw EraSdkError('invalid-props', 'unknown Cosmos chain "$id"');
+  }
+  return found;
+}
+
 class CosmosAccountView {
-  CosmosAccountView(this._entry, this._resolvedXfp);
+  CosmosAccountView(this._entry, this._resolvedXfp, [this.chain]);
 
   final RawAccountEntry _entry;
   final int _resolvedXfp;
+
+  /// The zone this view was resolved for, when it was asked for by id.
+  final CosmosChainInfo? chain;
 
   /// The account's source fingerprint, lowercase 8-hex.
   String get xfp => xfpToHex(_resolvedXfp);
@@ -475,9 +753,25 @@ class CosmosAccountView {
         _requireKey(_entry, 33), _withChainCode(_entry), 0, index);
   }
 
-  /// Bech32 address under the zone's own HRP, e.g. `prefix: 'osmo'`.
-  String deriveAddress(int index, {required String prefix}) {
-    return derive.cosmosAddressFromPublicKey(derivePublicKey(index), prefix);
+  /// Bech32 address for this account.
+  ///
+  /// Pass `chain: 'osmosis'` to name a zone from the registry — that also
+  /// picks the right hashing, which matters for Injective, Evmos and
+  /// Dymension whose payload is the Ethereum address rather than `hash160`.
+  /// Pass [prefix] for a zone the registry does not carry; that always uses
+  /// the classic recipe. A view resolved through `cosmos('osmosis')` already
+  /// knows its zone and needs neither.
+  String deriveAddress(int index, {String? prefix, String? chain}) {
+    final zone = chain != null ? cosmosChain(chain) : this.chain;
+    final hrp = prefix ?? zone?.hrp;
+    if (hrp == null) {
+      throw EraSdkError('invalid-props',
+          'name a Cosmos zone: deriveAddress(i, chain: ...) or prefix: ...');
+    }
+    final key = derivePublicKey(index);
+    return prefix == null && (zone?.ethermint ?? false)
+        ? derive.ethermintAddressFromPublicKey(key, hrp)
+        : derive.cosmosAddressFromPublicKey(key, hrp);
   }
 }
 
@@ -594,11 +888,31 @@ class EraAccounts {
   /// The EVM account (standard `m/44'/60'/...` scheme), if the export carries one.
   EvmAccountView? evm() {
     final entry = _find((e) =>
-            _classify(e.path) == AccountChain.evm &&
+            _isEvmAccount(e) &&
             (e.note == null || e.note == 'account.standard')) ??
-        _find((e) => _classify(e.path) == AccountChain.evm);
+        _find(_isEvmAccount);
     return entry == null ? null : EvmAccountView(entry, _resolveXfp(entry));
   }
+
+  /// An EVM ACCOUNT, as opposed to anything else that starts `m/44'/60'`.
+  ///
+  /// [_classify] reads only the first two path levels, and three different
+  /// things share those: the standard account `m/44'/60'/<account>'` (depth 3),
+  /// the Ledger Live entries `m/44'/60'/<n>'/0/0` (depth 5, fully derived
+  /// leaves) and the Ethermint keys that Injective, Evmos and Dymension are
+  /// exported under, which sit at `m/44'/60'/0'/0/0` and carry no chain code.
+  ///
+  /// Without this, [evm] could hand back one of those leaves — and a view over
+  /// a leaf reports a leaf path as its account path and derives two levels
+  /// BELOW it, producing a real key at a nonsense path. A wrong address that
+  /// looks entirely plausible is the worst failure this SDK can have.
+  ///
+  /// Depth is the whole test. Key material deliberately is NOT: an entry with
+  /// no public key and no chain code still resolves its xfp for signing, which
+  /// is reference behaviour, and the derivation path already refuses such an
+  /// entry with a typed error.
+  static bool _isEvmAccount(RawAccountEntry e) =>
+      _classify(e.path) == AccountChain.evm && e.path.length == 3;
 
   /// A Bitcoin account view. Defaults to the BIP-84 native-segwit account;
   /// pass `purpose: 44` for legacy P2PKH, 49 for nested segwit, 86 for
@@ -650,6 +964,61 @@ class EraAccounts {
     return entry == null ? null : BchAccountView(entry, _resolveXfp(entry));
   }
 
+  /// The Ledger Live EVM accounts — ten fully derived leaves at
+  /// `m/44'/60'/<n>'/0/0`, in export order. They carry a chain code, which is
+  /// what tells them apart from the Ethermint keys that share the same path
+  /// shape and carry none.
+  List<EvmLedgerAccountView> evmLedgerLive() => _raw.entries
+      .where((e) =>
+          _classify(e.path) == AccountChain.evm &&
+          e.path.length == 5 &&
+          e.chainCode != null)
+      .map((e) =>
+          EvmLedgerAccountView(e, _resolveXfp(e), EvmLedgerScheme.ledgerLive))
+      .toList();
+
+  /// The Ledger legacy (MEW / MyCrypto) EVM account, whose addresses sit ONE
+  /// level below it. It shares the standard account's path shape, so it is the
+  /// depth-3 EVM entry that is NOT the standard one.
+  EvmLedgerAccountView? evmLedgerLegacy() {
+    final entry = _find((e) =>
+        _isEvmAccount(e) && e.note != null && e.note != 'account.standard');
+    return entry == null
+        ? null
+        : EvmLedgerAccountView(
+            entry, _resolveXfp(entry), EvmLedgerScheme.ledgerLegacy);
+  }
+
+  /// A Litecoin, Dogecoin or Dash account. [purpose] picks the script type
+  /// where the chain has more than one — Litecoin is exported as BIP-84 by
+  /// every ERA profile, but a third-party profile may carry 49 or 44 instead,
+  /// so the default is "whichever the export actually holds", best first.
+  UtxoAccountView? utxo(UtxoChain chain, {int? purpose}) {
+    final wanted = _chainOf(chain);
+    final purposes = purpose == null ? _utxoChains[chain]!.purposes : [purpose];
+    for (final p in purposes) {
+      final entry = _find((e) =>
+          _classify(e.path) == wanted &&
+          e.path.length == 3 &&
+          e.path[0].index == p);
+      if (entry != null) {
+        return UtxoAccountView(entry, _resolveXfp(entry), chain);
+      }
+    }
+    return null;
+  }
+
+  /// The Litecoin account — BIP-84 native segwit unless the export says
+  /// otherwise.
+  UtxoAccountView? litecoin({int? purpose}) =>
+      utxo(UtxoChain.litecoin, purpose: purpose);
+
+  /// The Dogecoin account (`m/44'/3'/0'`, legacy P2PKH — no segwit).
+  UtxoAccountView? dogecoin() => utxo(UtxoChain.dogecoin);
+
+  /// The Dash account (`m/44'/5'/0'`, legacy P2PKH — no segwit).
+  UtxoAccountView? dash() => utxo(UtxoChain.dash);
+
   /// The TON account (linked via the Tonkeeper-style `crypto-hdkey` export).
   TonAccountView? ton() {
     final entry = _find((e) =>
@@ -674,20 +1043,56 @@ class EraAccounts {
   }
 
   /// All pre-derived Solana signers (usually `m/44'/501'/0'..9'`).
-  List<SolanaAccountView> solana() {
+  /// The Solana accounts an export carries — ALREADY DERIVED by the device,
+  /// one entry per key. Ed25519 hardened paths cannot be walked from a parent
+  /// public key, so there is nothing to derive here and nothing beyond what
+  /// the export shipped.
+  ///
+  /// Pass [scheme] to take one derivation scheme: the device ships all three,
+  /// so an unfiltered list holds several entries reporting the same [
+  /// SolanaAccountView.index] with different addresses.
+  List<SolanaAccountView> solana({SolanaScheme? scheme}) {
     return _raw.entries
         .where((e) =>
             _classify(e.path) == AccountChain.solana &&
             e.publicKey?.length == 32)
         .map((e) => SolanaAccountView(e, _resolveXfp(e)))
+        .where((v) => scheme == null || v.scheme == scheme)
         .toList();
   }
 
   /// The Cosmos account (`m/44'/118'/0'`), if the export carries one.
-  CosmosAccountView? cosmos() {
-    final entry = _find((e) => _classify(e.path) == AccountChain.cosmos);
-    return entry == null ? null : CosmosAccountView(entry, _resolveXfp(entry));
+  /// A Cosmos account. With no argument this is the shared SLIP-44 118 entry —
+  /// the one key that serves Cosmos Hub, Osmosis, Celestia and twenty-one
+  /// more. Name a zone (`cosmos('kava')`) to resolve the entry that zone is
+  /// actually derived under: the non-118 chains have their own coin types, and
+  /// the Ethermint zones are served by the EVM account.
+  CosmosAccountView? cosmos([String? chainId]) {
+    if (chainId == null) {
+      final entry = _find((e) => _classify(e.path) == AccountChain.cosmos);
+      return entry == null
+          ? null
+          : CosmosAccountView(entry, _resolveXfp(entry));
+    }
+    final zone = cosmosChain(chainId);
+    final entry = zone.ethermint
+        ? _find(_isEvmAccount)
+        : _find((e) =>
+            e.path.length == 3 &&
+            e.path[0].index == 44 &&
+            e.path[0].hardened &&
+            e.path[1].index == zone.slip44 &&
+            e.path[1].hardened);
+    return entry == null
+        ? null
+        : CosmosAccountView(entry, _resolveXfp(entry), zone);
   }
+
+  /// Every Cosmos zone this export can actually serve an address for.
+  List<CosmosChainInfo> availableCosmosChains() => [
+        for (final c in cosmosChains)
+          if (cosmos(c.id) != null) c
+      ];
 
   /// The XRP account (`m/44'/144'/0'`), if the export carries one.
   XrpAccountView? xrp() {

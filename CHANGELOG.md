@@ -1,3 +1,65 @@
+## Unreleased
+
+- The two Ledger EVM schemes are reachable: `evmLedgerLive()` returns the fully
+  derived leaves at `m/44'/60'/<n>'/0/0` (index other than 0 throws — there is
+  nothing below a leaf) and `evmLedgerLegacy()` the account whose addresses sit
+  ONE level below it. `derivePublicKeyChild` is exported for that single step.
+
+- TON addresses: `TonAccountView.address` (`UQ…`) and `.bounceableAddress`
+  (`EQ…`), plus the exported `tonAddressFromPublicKey`. The address is the hash
+  of the V4R2 wallet contract's `StateInit`, pinned by the firmware's own
+  device-verified vector.
+
+- Cardano addresses: `CardanoAccountView.deriveAddress(i, change: ...)` returns
+  the Shelley base address, and `cardanoBaseAddress(payment, stake)` is
+  exported. `header(1) || blake2b224(payment) || blake2b224(stake)`, bech32
+  under `addr`, matching the firmware.
+
+- `SolanaAccountView.scheme` distinguishes the three derivations the device
+  ships (`single`, `account`, `subAccount`), which the firmware separates by
+  path depth alone; `solana(scheme: ...)` filters. Before this, three entries
+  all reported `index` 0 with three different addresses.
+
+- The Cosmos family is addressable: `cosmosChains` is the 33-zone registry from
+  the firmware's `CosmosCoinInfo`, `cosmos('kava')` resolves a zone's own coin
+  type, `availableCosmosChains()` lists what an export can serve, and
+  `deriveAddress(i, chain: ...)` picks hashing as well as HRP. Ethermint
+  (Injective, Evmos, Dymension) is served by the EVM account through
+  `ethermintAddressFromPublicKey` — keccak payload, not `hash160`.
+
+- Litecoin, Dogecoin and Dash are classified (coin types 2', 3', 5') and
+  addressable through `litecoin()`, `dogecoin()`, `dash()` returning a
+  `UtxoAccountView`. Version bytes come from the firmware's `CoinInfo`: LTC
+  48/50, DOGE 30/22, DASH 76/16. `p2pkhAddressFromPublicKey` and
+  `nestedSegwitAddressFromPublicKey` take the version byte explicitly and are
+  exported; the Bitcoin helpers delegate to them.
+- `evm()` now requires an account-shaped entry (depth 3). It used to take the
+  first entry that classified as `evm`, which on an export carrying Ledger Live
+  or Ethermint leaves could be one of those — and a view over a leaf derives
+  two levels below it, answering a real key at a nonsense path.
+
+**Behaviour change — `EraAccounts.btc(purpose: 86).deriveAddress()` now returns
+an address instead of throwing.** The SDK used to refuse taproot and tell the
+caller to derive it "from `xpub()` with your Bitcoin library". A consumer did
+exactly that, omitted the BIP-341 tweak, and shipped a Receive screen offering a
+`bc1p…` built from the untweaked internal key — a valid address that no BIP-86
+signer, the ERA device included, can key-path spend.
+
+The witness program is the tweaked output key, never the BIP-32 child key:
+`P = lift_x(x(child))`, `t = tagged("TapTweak", x(P))`, `Q = P + t*G`, program
+`= x(Q)`, encoded as bech32m at witness version 1. `lift_x` always takes the
+even-Y point, so the child key's Y parity is discarded.
+
+- `btcTaprootAddressFromPublicKey(publicKey33, [hrp])` is exported for callers
+  holding a key rather than an account view.
+- `Secp256k1.taprootOutputKey` and `bech32mEncode` are the new primitives; no
+  new dependency — the curve arithmetic was already present for public BIP-32
+  derivation, and bech32m differs from bech32 by one checksum constant.
+- The three published BIP-86 vectors are pinned in `test/taproot_test.dart`.
+
+If you were catching `invalid-props` from `deriveAddress` on a purpose-86 view
+as a supported control-flow path, that catch is now dead code.
+
 ## 0.2.0
 
 **Behaviour change — `EraAccounts.btc(testnet: true)` now selects an account.**

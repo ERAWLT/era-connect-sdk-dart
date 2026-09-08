@@ -1060,21 +1060,18 @@ void main() {
       }
     });
 
-    test('a taproot view refuses addresses by code AND message', () {
+    test('a taproot view derives tweaked bech32m addresses', () {
+      // Purpose 86 used to throw here. It now answers, and what it answers is
+      // pinned against the published BIP-86 vectors in taproot_test.dart; this
+      // holds only the wiring — that the view reaches the taproot encoder and
+      // picks the hrp off the network.
       final accounts = walletOf([...mainnetEntries(), ...testnetEntries()]);
-      for (final testnet in [false, true]) {
-        final btc = accounts.btc(purpose: 86, testnet: testnet)!;
-        expect(
-          () => btc.deriveAddress(0),
-          throwsA(isA<EraSdkError>()
-              .having((e) => e.code, 'code', 'invalid-props')
-              .having(
-                  (e) => e.message,
-                  'message',
-                  'taproot addresses need the BIP-341 output-key tweak; '
-                      'derive them from xpub() with your Bitcoin library')),
-          reason: 'testnet: $testnet',
-        );
+      for (final entry in {false: 'bc1p', true: 'tb1p'}.entries) {
+        final btc = accounts.btc(purpose: 86, testnet: entry.key)!;
+        expect(btc.deriveAddress(0), startsWith(entry.value),
+            reason: 'testnet: ${entry.key}');
+        expect(btc.deriveAddress(0, change: true), startsWith(entry.value));
+        expect(btc.deriveAddress(0), isNot(btc.deriveAddress(0, change: true)));
       }
     });
 
@@ -1126,6 +1123,611 @@ void main() {
       final tron = wallet['tron'] as Map<String, dynamic>;
       expect(accounts.tron()?.xfp, tron['xfp']);
       expect(accounts.xfpFor(tron['accountPath'] as String), tron['xfp']);
+    });
+  });
+
+  /// [_classify] reads only the first two path levels, and three different
+  /// things start `m/44'/60'`: the account itself, the Ledger Live leaves, and
+  /// the Ethermint keys Injective / Evmos / Dymension are exported under. A
+  /// view built over a leaf reports the leaf as its account path and derives
+  /// two levels below it — a real key at a nonsense path, which is a wrong
+  /// address that looks entirely plausible.
+  group('evm() answers with an ACCOUNT, never a leaf under it', () {
+    final master = TestHdNode.fromMasterSeed(testSeed);
+
+    CborValue entryAt(List<(int, bool)> levels, int xfp) {
+      final node = master.derivePath(levels);
+      return cbMap([
+        (3, cbBytes(node.publicKey)),
+        (4, cbBytes(node.chainCode)),
+        (
+          6,
+          cbTag(
+            304,
+            cbMap([
+              (1, pathComponents(levels)),
+              (2, cbUint(xfp)),
+            ]),
+          )
+        ),
+      ]);
+    }
+
+    EraAccounts walletOf(List<CborValue> entries) => EraAccounts.fromUr(Ur(
+          'crypto-multi-accounts',
+          cborEncode(cbMap([
+            (1, cbUint(master.fingerprint)),
+            (2, cbArray(entries)),
+          ])),
+        ));
+
+    const leaf = [(44, true), (60, true), (0, true), (0, false), (0, false)];
+    const account = [(44, true), (60, true), (0, true)];
+
+    test('an Ethermint-shaped leaf alone is not an EVM account', () {
+      expect(walletOf([entryAt(leaf, 0x55555555)]).evm(), isNull);
+    });
+
+    test('a Ledger Live leaf never shadows the real account', () {
+      final accounts = walletOf([
+        entryAt(leaf, 0x55555555),
+        entryAt(account, 0x66666666),
+      ]);
+      final view = accounts.evm()!;
+      expect(view.accountPath, "m/44'/60'/0'");
+      // The address the account really answers, derived at m/44'/60'/0'/0/0 —
+      // exactly where the leaf sits, so a view over the leaf would have
+      // derived m/44'/60'/0'/0/0/0/0 and answered something else.
+      expect(
+        view.deriveAddress(0),
+        derive.evmAddressFromPublicKey(master.derivePath(leaf).publicKey),
+      );
+    });
+  });
+
+  /// Litecoin, Dogecoin and Dash: the same base58check/bech32 machinery
+  /// Bitcoin already uses, under different version bytes. Those bytes come
+  /// from each coin's `CoinInfo` in the firmware (`BitcoinDispatcher.cpp`) —
+  /// LTC 48/50, DOGE 30/22, DASH 76/16 — because they are the only thing
+  /// separating one chain's addresses from another's.
+  ///
+  /// The expectations were produced by a standalone stdlib oracle that
+  /// reproduces the published BIP-44 and BIP-84 Bitcoin vectors for this very
+  /// seed byte-for-byte, never by this package.
+  group('Litecoin, Dogecoin and Dash', () {
+    final master = TestHdNode.fromMasterSeed(testSeed);
+
+    Uint8List keyAt(List<(int, bool)> levels) =>
+        master.derivePath(levels).publicKey;
+
+    List<(int, bool)> leaf(int purpose, int coin) =>
+        [(purpose, true), (coin, true), (0, true), (0, false), (0, false)];
+
+    test("litecoin native segwit (m/84'/2') is ltc1q…", () {
+      expect(
+        derive.btcP2wpkhAddressFromPublicKey(keyAt(leaf(84, 2)), 'ltc'),
+        'ltc1qjmxnz78nmc8nq77wuxh25n2es7rzm5c2rkk4wh',
+      );
+    });
+
+    test("litecoin nested segwit (m/49'/2') is M…, not Bitcoin's 3…", () {
+      expect(
+        derive.nestedSegwitAddressFromPublicKey(keyAt(leaf(49, 2)), 50),
+        'M7wtsL7wSHDBJVMWWhtQfTMSYYkyooAAXM',
+      );
+    });
+
+    test("litecoin legacy (m/44'/2') is L…", () {
+      expect(derive.p2pkhAddressFromPublicKey(keyAt(leaf(44, 2)), 48),
+          'LUWPbpM43E2p7ZSh8cyTBEkvpHmr3cB8Ez');
+    });
+
+    test('dogecoin is D…', () {
+      expect(derive.p2pkhAddressFromPublicKey(keyAt(leaf(44, 3)), 30),
+          'DBus3bamQjgJULBJtYXpEzDWQRwF5iwxgC');
+    });
+
+    test('dash is X…', () {
+      expect(derive.p2pkhAddressFromPublicKey(keyAt(leaf(44, 5)), 76),
+          'XoJA8qE3N2Y3jMLEtZ3vcN42qseZ8LvFf5');
+    });
+
+    test('the generic encoder still answers Bitcoin under version 0', () {
+      // Proves the machinery under the altcoin constants is the same one the
+      // published Bitcoin vectors already pin.
+      expect(derive.p2pkhAddressFromPublicKey(keyAt(leaf(44, 0)), 0x00),
+          '1LqBGSKuX5yYUonjxT5qGfpUsXKYYWeabA');
+    });
+
+    CborValue entryAt(List<(int, bool)> levels, int xfp) {
+      final node = master.derivePath(levels);
+      return cbMap([
+        (3, cbBytes(node.publicKey)),
+        (4, cbBytes(node.chainCode)),
+        (
+          6,
+          cbTag(
+            304,
+            cbMap([
+              (1, pathComponents(levels)),
+              (2, cbUint(xfp)),
+            ]),
+          )
+        ),
+      ]);
+    }
+
+    final wallet = EraAccounts.fromUr(Ur(
+      'crypto-multi-accounts',
+      cborEncode(cbMap([
+        (1, cbUint(master.fingerprint)),
+        (
+          2,
+          cbArray([
+            entryAt([(84, true), (2, true), (0, true)], 0x11111111),
+            entryAt([(44, true), (3, true), (0, true)], 0x22222222),
+            entryAt([(44, true), (5, true), (0, true)], 0x33333333),
+          ])
+        ),
+      ])),
+    ));
+
+    test('classifies each chain at its own mainnet coin type', () {
+      final byPath = {for (final k in wallet.keys) k.path: k.chain};
+      expect(byPath["m/84'/2'/0'"], AccountChain.litecoin);
+      expect(byPath["m/44'/3'/0'"], AccountChain.dogecoin);
+      expect(byPath["m/44'/5'/0'"], AccountChain.dash);
+    });
+
+    test('derives receive and change addresses for litecoin', () {
+      final ltc = wallet.litecoin()!;
+      expect(ltc.purpose, 84);
+      expect(ltc.accountPath, "m/84'/2'/0'");
+      expect(ltc.receivePath(0), "m/84'/2'/0'/0/0");
+      expect(
+          ltc.deriveAddress(0), 'ltc1qjmxnz78nmc8nq77wuxh25n2es7rzm5c2rkk4wh');
+      expect(ltc.deriveAddress(0, change: true),
+          'ltc1qyeljcy9v88jg8sqvnqh0m5q390xruc5r98q9yy');
+    });
+
+    test('derives dogecoin and dash', () {
+      expect(wallet.dogecoin()!.deriveAddress(0),
+          'DBus3bamQjgJULBJtYXpEzDWQRwF5iwxgC');
+      expect(wallet.dash()!.deriveAddress(0),
+          'XoJA8qE3N2Y3jMLEtZ3vcN42qseZ8LvFf5');
+    });
+
+    test('answers null for a script type the export does not carry', () {
+      expect(wallet.litecoin(purpose: 44), isNull);
+      expect(wallet.litecoin(purpose: 84)!.purpose, 84);
+    });
+  });
+
+  /// The Cosmos family, transcribed from the firmware's `CosmosCoinInfo`
+  /// table. Twenty-four zones share SLIP-44 118, so the export carries ONE key
+  /// for all of them and only the HRP differs — which is why the registry is
+  /// what a caller enumerates, never the export's entries.
+  ///
+  /// Address expectations come from the standalone stdlib oracle that
+  /// reproduces the published BIP-44 / BIP-84 Bitcoin vectors for this seed
+  /// byte-for-byte.
+  group('the Cosmos chain registry', () {
+    final master = TestHdNode.fromMasterSeed(testSeed);
+
+    CborValue entryAt(List<(int, bool)> levels, int xfp) {
+      final node = master.derivePath(levels);
+      return cbMap([
+        (3, cbBytes(node.publicKey)),
+        (4, cbBytes(node.chainCode)),
+        (
+          6,
+          cbTag(
+            304,
+            cbMap([(1, pathComponents(levels)), (2, cbUint(xfp))]),
+          )
+        ),
+      ]);
+    }
+
+    final wallet = EraAccounts.fromUr(Ur(
+      'crypto-multi-accounts',
+      cborEncode(cbMap([
+        (1, cbUint(master.fingerprint)),
+        (
+          2,
+          cbArray([
+            entryAt([(44, true), (118, true), (0, true)], 0x11111111),
+            entryAt([(44, true), (459, true), (0, true)], 0x22222222),
+            entryAt([(44, true), (60, true), (0, true)], 0x33333333),
+          ])
+        ),
+      ])),
+    ));
+
+    test('carries every zone the firmware declares, with unique ids', () {
+      expect(cosmosChains, hasLength(33));
+      expect(cosmosChains.map((c) => c.id).toSet(), hasLength(33));
+    });
+
+    test('puts most zones on the shared 118 path', () {
+      // 33 zones: 24 share SLIP-44 118, three are Ethermint on 60, and six
+      // have their own coin type (Secret 529, Cronos 394, Kava 459, Terra 330,
+      // THORChain 931, Terra Classic 330 — which shares Terra's).
+      expect(cosmosChains.where((c) => c.slip44 == 118), hasLength(24));
+      expect(cosmosChains.where((c) => c.ethermint), hasLength(3));
+      expect(cosmosChains.where((c) => c.slip44 != 118 && !c.ethermint),
+          hasLength(6));
+    });
+
+    test('marks exactly Injective, Evmos and Dymension as ethermint', () {
+      expect(cosmosChains.where((c) => c.ethermint).map((c) => c.id).toList(),
+          ['injective', 'evmos', 'dymension']);
+    });
+
+    test('names the zone in the error when an id is unknown', () {
+      expect(
+          () => cosmosChain('nope'),
+          throwsA(
+              predicate((e) => '$e'.contains('unknown Cosmos chain "nope"'))));
+    });
+
+    test('gives every 118 zone the same key under its own hrp', () {
+      final view = wallet.cosmos()!;
+      expect(view.accountPath, "m/44'/118'/0'");
+      expect(view.deriveAddress(0, chain: 'cosmos'),
+          'cosmos19rl4cm2hmr8afy4kldpxz3fka4jguq0auqdal4');
+      expect(view.deriveAddress(0, chain: 'osmosis'),
+          'osmo19rl4cm2hmr8afy4kldpxz3fka4jguq0a5m7df8');
+      expect(view.deriveAddress(0, chain: 'celestia'),
+          'celestia19rl4cm2hmr8afy4kldpxz3fka4jguq0ad2ud9c');
+      expect(view.deriveAddress(1, chain: 'cosmos'),
+          'cosmos1jrkmdcwgq94uaamx6zax2luewlhf7u4kucx3kz');
+    });
+
+    test('resolves a non-118 zone to its own coin type', () {
+      final kava = wallet.cosmos('kava')!;
+      expect(kava.accountPath, "m/44'/459'/0'");
+      expect(kava.chain?.hrp, 'kava');
+      // A bound view needs no options at all.
+      expect(
+          kava.deriveAddress(0), 'kava1fzgm3840v4xwme059mfnx9rc5qgzl0enq7qgac');
+    });
+
+    test('answers null for a zone the export does not carry', () {
+      expect(wallet.cosmos('thorchain'), isNull);
+      expect(wallet.cosmos('secret'), isNull);
+    });
+
+    test('lists only the zones this export can actually serve', () {
+      final ids = wallet.availableCosmosChains().map((c) => c.id).toList();
+      expect(ids, contains('cosmos'));
+      expect(ids, contains('osmosis'));
+      expect(ids, contains('kava'));
+      expect(ids, contains('injective'));
+      expect(ids, isNot(contains('thorchain')));
+      // 24 zones on the shared 118 key, Kava on its own 459, three ethermint
+      // served by the EVM account.
+      expect(ids, hasLength(28));
+    });
+
+    test('refuses to guess an hrp when no zone is named', () {
+      expect(() => wallet.cosmos()!.deriveAddress(0),
+          throwsA(predicate((e) => '$e'.contains('name a Cosmos zone'))));
+    });
+
+    test('ethermint is served by the EVM account, keccak payload and all', () {
+      final inj = wallet.cosmos('injective')!;
+      expect(inj.accountPath, "m/44'/60'/0'");
+      final address = inj.deriveAddress(0);
+      expect(address, startsWith('inj1'));
+
+      // The proof that the recipe is keccak and not hash160: the bech32
+      // payload must be exactly the 20 bytes of the EVM address for the same
+      // key, which published vectors already pin.
+      final evmHex = wallet.evm()!.deriveAddress(0).substring(2).toLowerCase();
+      expect(
+        address,
+        bech32Encode('inj', convertBits(hexToBytes(evmHex), 8, 5, pad: true)),
+      );
+    });
+
+    test('a raw prefix always means the classic recipe, never ethermint', () {
+      // `prefix` is the escape hatch for zones the registry does not carry, so
+      // it must not silently inherit a bound zone's hashing.
+      final inj = wallet.cosmos('injective')!;
+      expect(inj.deriveAddress(0, prefix: 'inj'), isNot(inj.deriveAddress(0)));
+    });
+  });
+
+  /// The device ships all three Solana derivations, and the firmware tells
+  /// them apart by PATH DEPTH alone — all three carry the same
+  /// `Derivation::Solana`. Read `index` without `scheme` and three different
+  /// accounts all claim to be number 0.
+  group('Solana derivation schemes', () {
+    CborValue solEntry(List<(int, bool)> levels, int keyByte) => cbMap([
+          (3, cbBytes(Uint8List(32)..fillRange(0, 32, keyByte))),
+          (
+            6,
+            cbTag(
+              304,
+              cbMap([(1, pathComponents(levels)), (2, cbUint(0x11111111))]),
+            )
+          ),
+        ]);
+
+    final wallet = EraAccounts.fromUr(Ur(
+      'crypto-multi-accounts',
+      cborEncode(cbMap([
+        (1, cbUint(0x12345678)),
+        (
+          2,
+          cbArray([
+            solEntry([(44, true), (501, true)], 0x01),
+            solEntry([(44, true), (501, true), (0, true)], 0x02),
+            solEntry([(44, true), (501, true), (0, true), (0, true)], 0x03),
+            solEntry([(44, true), (501, true), (1, true)], 0x04),
+          ])
+        ),
+      ])),
+    ));
+
+    test('three entries claim index 0 — the scheme is what separates them', () {
+      final zero = wallet.solana().where((v) => v.index == 0).toList();
+      expect(zero, hasLength(3));
+      expect(zero.map((v) => v.scheme).toList(), [
+        SolanaScheme.single,
+        SolanaScheme.account,
+        SolanaScheme.subAccount,
+      ]);
+      expect(zero.map((v) => v.address).toSet(), hasLength(3));
+    });
+
+    test('reads the scheme off the path depth', () {
+      final byPath = {for (final v in wallet.solana()) v.path: v.scheme};
+      expect(byPath["m/44'/501'"], SolanaScheme.single);
+      expect(byPath["m/44'/501'/0'"], SolanaScheme.account);
+      expect(byPath["m/44'/501'/0'/0'"], SolanaScheme.subAccount);
+      expect(byPath["m/44'/501'/1'"], SolanaScheme.account);
+    });
+
+    test('filters to one scheme, which is what a wallet actually wants', () {
+      final accounts = wallet.solana(scheme: SolanaScheme.account);
+      expect(accounts.map((v) => v.path).toList(),
+          ["m/44'/501'/0'", "m/44'/501'/1'"]);
+      expect(accounts.map((v) => v.index).toList(), [0, 1]);
+      expect(wallet.solana(scheme: SolanaScheme.single), hasLength(1));
+      expect(wallet.solana(scheme: SolanaScheme.subAccount), hasLength(1));
+    });
+
+    test('an unfiltered list is still every key the export shipped', () {
+      expect(wallet.solana(), hasLength(4));
+    });
+  });
+
+  /// A Shelley BASE address joins two keys — payment and stake — so it commits
+  /// to both. The layout is `header(1) || blake2b224(payment) ||
+  /// blake2b224(stake)` with header `0x01` (type 0, mainnet), bech32 under
+  /// `addr`, exactly as the firmware's `CardanoAddress.cpp` builds it.
+  ///
+  /// The expectations here are ASSEMBLED FROM PRIMITIVES rather than restated,
+  /// so a change to the header byte, the hash length, the key order or the
+  /// checksum variant fails even though the derived keys come from code tested
+  /// elsewhere.
+  group('Cardano Shelley base addresses', () {
+    final key = Uint8List(32)..fillRange(0, 32, 0x11);
+    final chainCode = Uint8List(32)..fillRange(0, 32, 0x22);
+
+    final wallet = EraAccounts.fromUr(Ur(
+      'crypto-multi-accounts',
+      cborEncode(cbMap([
+        (1, cbUint(0x12345678)),
+        (
+          2,
+          cbArray([
+            cbMap([
+              (3, cbBytes(key)),
+              (4, cbBytes(chainCode)),
+              (
+                6,
+                cbTag(
+                  304,
+                  cbMap([
+                    (
+                      1,
+                      pathComponents([(1852, true), (1815, true), (0, true)])
+                    ),
+                    (2, cbUint(0x33333333)),
+                  ]),
+                )
+              ),
+            ]),
+          ])
+        ),
+      ])),
+    ));
+
+    final ada = wallet.cardano()!;
+
+    /// The address as the spec spells it, built here from byte primitives.
+    String expectedAddress(Uint8List payment, Uint8List stake) {
+      final payload = concatBytes([
+        Uint8List.fromList([0x01]),
+        blake2b(payment, 28),
+        blake2b(stake, 28),
+      ]);
+      return bech32Encode('addr', convertBits(payload, 8, 5, pad: true));
+    }
+
+    test('joins the payment key to the stake key at 2/0', () {
+      expect(ada.deriveAddress(0),
+          expectedAddress(ada.deriveKey(0, 0), ada.deriveKey(2, 0)));
+    });
+
+    test('is 57 bytes under the addr hrp', () {
+      final address = ada.deriveAddress(0);
+      expect(address, startsWith('addr1'));
+      // 57 bytes regrouped to 5-bit words is 92 words, plus hrp and checksum.
+      expect(address.length, 'addr'.length + 1 + 92 + 6);
+    });
+
+    test('change uses role 1 and the SAME stake key', () {
+      final change = ada.deriveAddress(0, change: true);
+      expect(change, isNot(ada.deriveAddress(0)));
+      expect(change, expectedAddress(ada.deriveKey(1, 0), ada.deriveKey(2, 0)));
+    });
+
+    test('walks the receive chain', () {
+      expect(ada.deriveAddress(1), isNot(ada.deriveAddress(0)));
+      expect(ada.deriveAddress(1),
+          expectedAddress(ada.deriveKey(0, 1), ada.deriveKey(2, 0)));
+    });
+
+    test('refuses keys that are not 32 bytes', () {
+      expect(
+        () => derive.cardanoBaseAddress(Uint8List.sublistView(key, 1), key),
+        throwsA(predicate((e) => '$e'.contains('two 32-byte keys'))),
+      );
+    });
+
+    test('both halves matter: swapping them changes the address', () {
+      expect(derive.cardanoBaseAddress(key, chainCode),
+          isNot(derive.cardanoBaseAddress(chainCode, key)));
+    });
+  });
+
+  /// A TON address is not a hash of the key: it is the hash of the wallet
+  /// CONTRACT the key would deploy, so the recipe involves the V4R2 code
+  /// cell's hash and depth, a data cell of 321 bits, and a StateInit cell with
+  /// two refs.
+  ///
+  /// The vector is the firmware's own device-verified regression case
+  /// (`tests/Basic-tests/test_ton_address_gen.py`): seed `8921ec62…44c9fd`,
+  /// path `m/44'/607'/0'`, address
+  /// `UQBwluCEV9BhNqgIRETT4reunDpTDDotShNuKeTbst9Bdn8N`. The public key below
+  /// is that path's key, derived independently by a stdlib SLIP-0010 +
+  /// RFC-8032 implementation that reproduces the same address end to end.
+  group('TON wallet addresses', () {
+    final publicKey = hexToBytes(
+        '0d1a1f413eed4d02e7abbc5139a1e0446cd807d7692d43c294e50925782f25b2');
+    const expected = 'UQBwluCEV9BhNqgIRETT4reunDpTDDotShNuKeTbst9Bdn8N';
+
+    test('matches the address the device shows for the same key', () {
+      expect(derive.tonAddressFromPublicKey(publicKey), expected);
+    });
+
+    test('is the 48-character non-bounceable friendly form by default', () {
+      final address = derive.tonAddressFromPublicKey(publicKey);
+      expect(address, hasLength(48));
+      expect(address, startsWith('UQ'));
+    });
+
+    test('bounceable is the same account under a different tag', () {
+      final bounceable =
+          derive.tonAddressFromPublicKey(publicKey, bounceable: true);
+      expect(bounceable, startsWith('EQ'));
+      expect(bounceable, isNot(expected));
+      // Same 32-byte account id, different tag byte and therefore checksum.
+      expect(bounceable.substring(2, 44), expected.substring(2, 44));
+    });
+
+    test('refuses anything but a 32-byte ed25519 key', () {
+      expect(
+        () =>
+            derive.tonAddressFromPublicKey(Uint8List.sublistView(publicKey, 1)),
+        throwsA(predicate((e) => '$e'.contains('32-byte ed25519 key'))),
+      );
+    });
+  });
+
+  /// The device exports three EVM derivations and [EraAccounts.evm] answers
+  /// only the standard one, so the other two were invisible. They are not
+  /// interchangeable: Ledger Live ships fully derived LEAVES (one key per
+  /// account, nothing to derive), while Ledger legacy is an account whose
+  /// addresses sit ONE level below it rather than two.
+  group('the two Ledger EVM schemes', () {
+    final master = TestHdNode.fromMasterSeed(testSeed);
+
+    CborValue entryAt(List<(int, bool)> levels,
+        {String? note, bool chainCode = true}) {
+      final node = master.derivePath(levels);
+      return cbMap([
+        (3, cbBytes(node.publicKey)),
+        if (chainCode) (4, cbBytes(node.chainCode)),
+        (
+          6,
+          cbTag(
+            304,
+            cbMap([(1, pathComponents(levels)), (2, cbUint(0x11111111))]),
+          )
+        ),
+        if (note != null) (10, cbText(note)),
+      ]);
+    }
+
+    const acct = [(44, true), (60, true), (0, true)];
+    const live0 = [(44, true), (60, true), (0, true), (0, false), (0, false)];
+    const live1 = [(44, true), (60, true), (1, true), (0, false), (0, false)];
+
+    final wallet = EraAccounts.fromUr(Ur(
+      'crypto-multi-accounts',
+      cborEncode(cbMap([
+        (1, cbUint(master.fingerprint)),
+        (
+          2,
+          cbArray([
+            entryAt(acct, note: 'account.standard'),
+            entryAt(acct, note: 'account.ledger_legacy'),
+            entryAt(live0),
+            entryAt(live1),
+            // Ethermint: same path shape as a Ledger Live leaf, no chain code.
+            entryAt(live0, chainCode: false),
+          ])
+        ),
+      ])),
+    ));
+
+    test('evm() still answers the standard account', () {
+      expect(wallet.evm()!.accountPath, "m/44'/60'/0'");
+      expect(
+        wallet.evm()!.deriveAddress(0),
+        derive.evmAddressFromPublicKey(master.derivePath(live0).publicKey),
+      );
+    });
+
+    test('ledger legacy derives ONE level below the account, not two', () {
+      final legacy = wallet.evmLedgerLegacy()!;
+      expect(legacy.scheme, EvmLedgerScheme.ledgerLegacy);
+      expect(legacy.path, "m/44'/60'/0'");
+      final account = master.derivePath(acct);
+      expect(
+        legacy.deriveAddress(3),
+        derive.evmAddressFromPublicKey(derive.derivePublicKeyChild(
+            account.publicKey, account.chainCode, 3)),
+      );
+      // ...which is a different address from the standard scheme's index 3.
+      expect(legacy.deriveAddress(3), isNot(wallet.evm()!.deriveAddress(3)));
+    });
+
+    test('ledger live entries are already-derived leaves, in export order', () {
+      final live = wallet.evmLedgerLive();
+      expect(live.map((v) => v.path).toList(),
+          ["m/44'/60'/0'/0/0", "m/44'/60'/1'/0/0"]);
+      expect(live[0].deriveAddress(),
+          derive.evmAddressFromPublicKey(master.derivePath(live0).publicKey));
+    });
+
+    test('the chain-code-less Ethermint leaf is not mistaken for Ledger Live',
+        () {
+      // Five entries share `m/44'/60'`; only two are Ledger Live leaves.
+      expect(wallet.evmLedgerLive(), hasLength(2));
+    });
+
+    test('a Ledger Live entry refuses to pretend it can derive further', () {
+      expect(
+        () => wallet.evmLedgerLive()[0].deriveAddress(1),
+        throwsA(predicate(
+            (e) => '$e'.contains('ask for another entry, not another index'))),
+      );
     });
   });
 }

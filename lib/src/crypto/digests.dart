@@ -30,3 +30,11 @@ Uint8List ripemd160(Uint8List data) => RIPEMD160Digest().process(data);
 Uint8List sha256d(Uint8List data) => sha256(sha256(data));
 
 Uint8List hash160(Uint8List data) => ripemd160(sha256(data));
+
+/// BIP-340 tagged hash: `SHA256(SHA256(tag) || SHA256(tag) || data)`.
+/// The doubled tag digest is what domain-separates TapTweak from every other
+/// use of SHA-256 on the same bytes.
+Uint8List taggedHash(String tag, Uint8List data) {
+  final t = sha256(Uint8List.fromList(tag.codeUnits));
+  return sha256(Uint8List.fromList([...t, ...t, ...data]));
+}
