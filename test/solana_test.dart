@@ -106,7 +106,8 @@ void main() {
 
     test("the single-account path m/44'/501' encodes two hardened levels", () {
       final levels = levelsOf(urFor("m/44'/501'"));
-      expect(levels.map((l) => (l.index, l.hardened)), [(44, true), (501, true)]);
+      expect(
+          levels.map((l) => (l.index, l.hardened)), [(44, true), (501, true)]);
     });
 
     test("the account path m/44'/501'/idx' still encodes three", () {
