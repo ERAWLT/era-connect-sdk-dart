@@ -3,11 +3,14 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:ed25519_edwards/ed25519_edwards.dart' as ed;
+import 'package:era_connect/src/cbor/decode.dart';
 import 'package:era_connect/src/cbor/encode.dart';
 import 'package:era_connect/src/cbor/model.dart';
 import 'package:era_connect/src/chains/shared.dart';
 import 'package:era_connect/src/chains/solana.dart';
 import 'package:era_connect/src/core/bytes.dart';
+import 'package:era_connect/src/core/errors.dart';
+import 'package:era_connect/src/registry/keypath.dart';
 import 'package:era_connect/src/ur/ur.dart';
 import 'package:era_connect/src/verify/solana.dart';
 import 'package:test/test.dart';
@@ -74,6 +77,77 @@ void main() {
         broadcastMessageBytes: drifted,
       ));
       expect(result.ok, isFalse);
+    });
+  });
+
+  group('derivation schemes on the wire', () {
+    // The device exports three Solana derivations and tells them apart by path
+    // DEPTH alone. The firmware signs at the full request path, so all three
+    // are signable — this guard used to refuse two of them, which made the
+    // address the device's own Receive screen shows by default unspendable.
+    final pubkey = Uint8List.fromList(List.filled(32, 0x09));
+
+    /// The levels the request actually carries: `crypto-keypath` (tag 304)
+    /// key 1, parsed back out of the flat `[index, hardened, ...]` array.
+    List<PathLevel> levelsOf(Ur ur) {
+      final keypath = stripTags(mapGet(cborDecode(ur.cbor), 3)!);
+      return parsePathComponents(mapGet(keypath, 1))!;
+    }
+
+    Ur urFor(String path) => era
+        .generateSignRequest(SolSignRequestProps(
+          requestId: requestId,
+          signData: signData,
+          path: path,
+          xfp: '33333333',
+          publicKey: pubkey,
+        ))
+        .ur;
+
+    test("the single-account path m/44'/501' encodes two hardened levels", () {
+      final levels = levelsOf(urFor("m/44'/501'"));
+      expect(levels.map((l) => (l.index, l.hardened)), [(44, true), (501, true)]);
+    });
+
+    test("the account path m/44'/501'/idx' still encodes three", () {
+      final levels = levelsOf(urFor("m/44'/501'/3'"));
+      expect(levels.map((l) => (l.index, l.hardened)),
+          [(44, true), (501, true), (3, true)]);
+    });
+
+    test("the sub-account path m/44'/501'/idx'/0' encodes four", () {
+      final levels = levelsOf(urFor("m/44'/501'/3'/0'"));
+      expect(levels.map((l) => (l.index, l.hardened)),
+          [(44, true), (501, true), (3, true), (0, true)]);
+    });
+
+    test('a depth outside 2..4 is refused', () {
+      for (final path in ["m/44'", "m/44'/501'/0'/0'/0'"]) {
+        expect(
+          () => urFor(path),
+          throwsA(isA<EraSdkError>()
+              .having((e) => e.code, 'code', 'invalid-props')),
+          reason: path,
+        );
+      }
+    });
+
+    test('an unhardened level is refused at every depth', () {
+      for (final path in ['m/44/501', "m/44'/501'/0", "m/44'/501'/0'/0"]) {
+        expect(
+          () => urFor(path),
+          throwsA(isA<EraSdkError>()
+              .having((e) => e.code, 'code', 'invalid-props')),
+          reason: path,
+        );
+      }
+    });
+
+    test('the coin type is deliberately not policed', () {
+      // The guard never checked it. Tightening that here would refuse paths
+      // that sign on the device today, in a release that only claims to
+      // ACCEPT more.
+      expect(() => urFor("m/44'/784'/0'"), returnsNormally);
     });
   });
 

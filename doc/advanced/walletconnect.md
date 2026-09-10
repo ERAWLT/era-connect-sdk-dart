@@ -65,9 +65,13 @@ value folded to 0/1.
 | `solana_signAndSendTransaction` | same | same | `{ signature: <base58> }` — the transaction signature, after you submit |
 | `solana_signMessage` | `signType: SolSignType.message` | The raw message bytes. The device signs them **verbatim**, with no off-chain prefix | `{ signature: <base58> }` |
 
-The Solana path is the 3-level hardened account path `m/44'/501'/idx'` — the
-exported account is the signer, because Ed25519 has no public child derivation.
-Anything else is refused with `invalid-props`.
+The Solana path is the exported entry's own path — the account IS the signer,
+because Ed25519 has no public child derivation. It is fully hardened and 2 to 4
+levels deep, one per derivation scheme the device ships (`m/44'/501'`,
+`m/44'/501'/idx'`, `m/44'/501'/idx'/0'`); anything else is refused with
+`invalid-props`. A dApp names the key it wants by `pubkey`, so resolve that to
+the matching entry and pass ITS path — a session that advertises several Solana
+accounts will be asked for each of them.
 
 ### `bip122`
 
