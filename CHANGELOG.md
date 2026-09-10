@@ -1,3 +1,18 @@
+## 0.4.0
+
+- `SolanaChain.generateSignRequest` accepts every derivation scheme the device
+  exports, not one of three. The guard demanded exactly three hardened levels,
+  so `m/44'/501'` ("Single Account Path" — the address the device's own Receive
+  screen shows by DEFAULT) and `m/44'/501'/idx'/0'` ("Sub-account Path" — what
+  Phantom and Solflare use) could not be signed through this package at all,
+  while the firmware signs both: it derives at the FULL path the request
+  carries and gates only on the source fingerprint matching the master or the
+  parent. The rule is now "fully hardened, 2 to 4 levels".
+
+  The coin type stays unchecked, deliberately. The old guard never checked it,
+  and adding that here would refuse paths that sign today — in a release whose
+  only claim is to accept more.
+
 ## 0.3.0
 
 - The two Ledger EVM schemes are reachable: `evmLedgerLive()` returns the fully

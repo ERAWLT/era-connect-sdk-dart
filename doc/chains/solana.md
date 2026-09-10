@@ -16,7 +16,7 @@
 | Prop | Type | Required | What it is |
 |---|---|---|---|
 | `signData` | `Uint8List` | yes | the compiled transaction **message** bytes, or raw message bytes |
-| `path` | `String` | yes | the 3-level hardened account path, `m/44'/501'/idx'` |
+| `path` | `String` | yes | the signer's fully hardened path, 2 to 4 levels — see [the derivation-path rule](#the-derivation-path-rule) |
 | `xfp` | `int` (u32) or `String` (8 hex) | yes | the account's source fingerprint — `SolanaAccountView.xfp` |
 | `publicKey` | `Uint8List?` | one of the two | the 32-byte Ed25519 signer key |
 | `address` | `String?` | one of the two | the same key in base58 form |
@@ -54,12 +54,29 @@ signature over the raw bytes you passed, which most verifiers will not accept.
 
 ### The derivation-path rule
 
-`path` must be the 3-level hardened account path `m/44'/501'/idx'`, and the SDK
-refuses anything else with `invalid-props`. Ed25519 has no public child
-derivation, so there is no `…/0/0` to reach from an account key: the device
-pre-derives hardened accounts and **each exported entry is itself a signer**.
-`SolanaAccountView.path` gives you the exact string, `publicKey` the key at it,
-and `address` its base58 form (which on Solana *is* the public key).
+`path` must be **fully hardened and 2 to 4 levels**; anything else is
+`invalid-props`. Ed25519 has no public child derivation, so there is no `…/0/0`
+to reach from an account key: the device pre-derives hardened accounts and
+**each exported entry is itself a signer**. `SolanaAccountView.path` gives you
+the exact string, `publicKey` the key at it, and `address` its base58 form
+(which on Solana *is* the public key).
+
+The bound is 2..4 because the device exports three derivations and tells them
+apart by depth alone — the same three [`SolanaScheme`](accounts.md) reports:
+
+| Scheme | Path | Where you meet it |
+|---|---|---|
+| `single` | `m/44'/501'` | the address the device's own Receive screen shows by default |
+| `account` | `m/44'/501'/idx'` | Ledger Live's scheme |
+| `subAccount` | `m/44'/501'/idx'/0'` | Phantom / Solflare |
+
+All three sign: the firmware derives at the **full** path the request carries
+and gates only on the source fingerprint matching the master or the parent. Take
+the string from the entry you are signing for — do not rebuild it — and the
+depth follows from the scheme.
+
+The coin type is deliberately **not** checked. It never was, and refusing a
+non-501 path here would reject requests the device signs today.
 
 ### Display
 
